@@ -1,8 +1,6 @@
 var Parser = require('htmlparser');
 var fs = require('fs');
-var sys = require('sys');
 var inspect = require('eyes').inspector({styles: {all: 'magenta'}});
-var escape = require('escape-html');
 var mustacheRegex = /{{(.*?)}}/;
 
 var ElementDescriptor = function () {
@@ -32,7 +30,7 @@ var currentElementDescriptor = new ElementDescriptor();
 blocks.push(currentBlock);
 blockStack.push(currentBlock);
 
-fs.readFile('template.html', 'utf-8', function (error, string) {
+fs.readFile('template.shift', 'utf-8', function (error, string) {
 
     var handler = new Parser.DefaultHandler(function (error, ast) {
         if (error) {
@@ -52,18 +50,11 @@ fs.readFile('template.html', 'utf-8', function (error, string) {
     parser.parseComplete(result);
     closeElementDescriptor();
     console.log();
-    //console.log('blocks', blocks.length);
     inspect(blocks);
-    var printedBlocks = '';
-    //blocks.forEach(function (block) {
-    //    printedBlocks += printBlock(block);
-    //});
-    //var b = {block: ['1', '2', ['3', '4']], fn: function(input) { return input; }};
-    var b = blocks[1];
     //printedBlocks = objToJs();
-    fs.writeFile('template.js', "var b = " + objToJs(b) + ';', function (err, done) {
-        if (err) console.log(err);
-    });
+    //fs.writeFile('template.js', "var b = " + objToJs(b) + ';', function (err, done) {
+    //    if (err) console.log(err);
+    //});
 });
 
 var visit = function (ast) {
@@ -108,11 +99,8 @@ var visitTextNode = function (text) {
             visitBlockStart(blockName, blockHeader, blockContents);
             visitTextNode(blockContents);
             visitBlockEnd();
-            //console.log('contents ===');
-            //console.log(blockContents);
-            //console.log("END IS BLOCK");
+
         } else if (containsBlock(text)) {
-            //console.log('contains block: ', text);
             var blockStartIndex = text.indexOf(("{{#"));
             var preBlock = text.substring(0, blockStartIndex);
             var rest = text.substr(blockStartIndex);
@@ -121,6 +109,7 @@ var visitTextNode = function (text) {
             // console.log(blockCloseText);
             // console.log(rest);
             var postBlockStartIndex = rest.lastIndexOf(blockCloseText);
+            console.log(rest);
             if (postBlockStartIndex === -1) throw new Error("Block " + blockName + " was not closed");
             var postBlock = rest.substr(postBlockStartIndex + blockCloseText.length);
             var block = text.substr(blockStartIndex, postBlockStartIndex + blockCloseText.length);

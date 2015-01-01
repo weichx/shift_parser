@@ -1,0 +1,71 @@
+{{interface
+anotherVar : string;
+}}
+<div id="first">
+    some text {{variable[i].property}} more text {{anotherVar}}
+    <span id="otherElement">
+        <bold super="{{true}}">Dont replace</bold>
+        more text2 {{var}}
+    </span>
+    this is the pre block
+    {{#if somevar == true && 1 > 2}}
+        string! {{var | formatter0 | formatter1 }}
+        {{#unless false}}
+            other!
+        {{/unless}}
+
+        {{#foreach arrayName -> element:el index:i}}
+            more content
+            {{&element.name}}
+        {{/foreach}}
+
+        {{#switch someVar}}
+            {{::case 0}}
+            {{::case 1}}
+            {{::default}}
+        {{/switch}}
+    {{/if}}
+    this is the post block
+    {{#if true}}
+
+        {{::elseif not true}}
+
+    {{/if}}
+
+</div>
+
+<!--
+
+first block in each template file must be {{interface}}, this is not compiled into template just used to type validations and variable declarations
+
+literals found in variables are allowed as attributes but not as content. <div attr={{'name'}}> is fine. {{'name'}} alone is not.
+literals in blocks are fine.
+
+Blocks
+    if/elseif/else
+    forin -> key, value. maybe dont include this, will depend on how object key observation comes out.
+    foreach -> element, i
+    switch/case/default
+
+    injected variables look like this: {{#foreach arrayName -> element:el index:i}}
+    they are used like so: {{&i}}
+    they are never hidden, and exist only in the block they are defined in and child blocks
+
+
+No injection possible between templates
+
+Block fn -> return true if block should render, if fn is undefined || null, always render
+Block generator -> generates blocks given an array. blocks are generated if in dom and when array grows and destroyed when it shrinks. nothing happens if null || undefined
+Block content variables -> user variables within this block, observed to re-evaluate rendering this block
+Block variables -> variables that live on the block, not user code and not observed. ex. forloop index value
+BlockScope variables -> variables that are injected into this block from parent block
+
+
+
+Block needs to know: what variables it cares about, if any of these change, re run just the affected elements
+attributes, and block fn. Do not slam it. Ideally we are setup to coalesce subsequent changes to minimize
+the number of dom inserts, but this should be profiled.
+
+Formatters
+    only valid in variable blocks or (maybe in injections?)
+-->
