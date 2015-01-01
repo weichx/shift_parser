@@ -21,6 +21,8 @@ var Block = function () {
     this.elementDescriptorIndices = [];
     this.elementCount = 0;
     this.blockFunction = null;
+    this.blockInputs = [];
+    this.blockOutputs = [];
 };
 
 var blocks = [];
@@ -31,38 +33,37 @@ blocks.push(currentBlock);
 blockStack.push(currentBlock);
 
 fs.readFile('template.html', 'utf-8', function (error, string) {
-    var result = string.replace(/\{\{.*?\}\}/g,function(match) {
-        return match.replace(/</g,"&lt;").replace(/>/g, "&gt;");
-    });
-    console.log(result);
+
     var handler = new Parser.DefaultHandler(function (error, ast) {
         if (error) {
             console.log(error);
         } else {
-            //inspect(ast);
-            console.log()
-            //ast.forEach(function (element) {
-            //    visit(element);
-            //});
+           // inspect(ast);
+            ast.forEach(function (element) {
+                visit(element);
+            });
         }
     }, {ignoreWhitespace: true});
 
-    //var parser = new Parser.Parser(handler);
-    //parser.parseComplete(string);
-    //closeElementDescriptor();
-    //console.log();
-    ////console.log('blocks', blocks.length);
-    //inspect(blocks);
-    //var printedBlocks = '';
-    ////blocks.forEach(function (block) {
-    ////    printedBlocks += printBlock(block);
-    ////});
-    ////var b = {block: ['1', '2', ['3', '4']], fn: function(input) { return input; }};
-    //var b = blocks[0];
-    ////printedBlocks = objToJs();
-    //fs.writeFile('template.js', "var b = " + objToJs(b) + ';', function (err, done) {
-    //    if (err) console.log(err);
+    var parser = new Parser.Parser(handler);
+    var result = string.replace(/\{\{.*?\}\}/g,function(match) {
+        return match.replace(/</g,"&lt;").replace(/>/g, "&gt;");
+    });
+    parser.parseComplete(result);
+    closeElementDescriptor();
+    console.log();
+    //console.log('blocks', blocks.length);
+    inspect(blocks);
+    var printedBlocks = '';
+    //blocks.forEach(function (block) {
+    //    printedBlocks += printBlock(block);
     //});
+    //var b = {block: ['1', '2', ['3', '4']], fn: function(input) { return input; }};
+    var b = blocks[1];
+    //printedBlocks = objToJs();
+    fs.writeFile('template.js', "var b = " + objToJs(b) + ';', function (err, done) {
+        if (err) console.log(err);
+    });
 });
 
 var visit = function (ast) {
@@ -100,9 +101,11 @@ var visitTextNode = function (text) {
         if (isBlock(text)) {
             //console.log('START IS BLOCK');
             //console.log(text);
+            var blockName = getBlockName(text);
+            var blockHeader = extractBlockHeader(text);
             var blockContents = extractBlockContents(text);
-            console.log(extractBlockHeader(text));
-            visitBlockStart(blockContents);
+
+            visitBlockStart(blockName, blockHeader, blockContents);
             visitTextNode(blockContents);
             visitBlockEnd();
             //console.log('contents ===');
@@ -146,7 +149,7 @@ var visitInnerText = function (input) {
     currentElementDescriptor.content.push(removeNewLines(input));
 };
 
-var visitBlockStart = function (input) {
+var visitBlockStart = function (blockName, blockheader, blockContent) {
     //console.log('visiting', input);
     closeElementDescriptor();
     //todo this separator is likely not quite right, explore when building dom from structures
@@ -154,7 +157,7 @@ var visitBlockStart = function (input) {
     blockStack.push(currentBlock);
     currentBlock = new Block();
     blocks.push(currentBlock);
-    createBlockFunction(input);
+    currentBlock.blockFunction = createBlockFunction(blockName, blockheader, blockContent);
     //todo get block function
     openElementDescriptor();
 };
@@ -277,74 +280,46 @@ var getBlockName = function (input) {
     return input.substring(3, index);
 };
 
-var createBlockFunction = function (blockName, blockHeader) {
-
+var createBlockFunction = function (blockName, blockHeader, blockContents) {
+    console.log('creating fn', blockName, blockHeader, blockContents);
+    var fn = blockFns[blockName];
+    if(!fn) {
+        throw new Error("Unknown block function: " + blockName);
+    }
+    return fn(blockHeader);
 };
 
 var blockFns = {
     'if': function (blockHeader) {
-        return 'function() {\nreturn ' + blockHeader + ';\n}';
+        var fn = function(condition) {
+            return condition == true;
+        };
+
+        fn.name = 'blockFn_if';
+        //could be maybe shared if arguments are condensed into arguments[0]
+        return fn;
+    },
+    'unless': function(blockHeader) {
+        return 'function() {\return !(' + blockHeader + ');\n}';
     }
 };
 
-var printElementDescriptors = function (block) {
-    var out = '';
-    var print = function (variable) {
-        if (Array.isArray(variable)) {
-            out += '[';
-            for (var i = 0; i < variable.length; i++) {
-                out += '"' + variable[i] + '",';
-            }
-            out = out.substring(0, out.length - 1);
-            out += '],';
-        } else {
-            out += '"' + variable + '",';
-        }
-    };
-    block.elementDescriptors.forEach(function (desc) {
-        out += '{\nvariables: [';
-        desc.variables.forEach(print);
-        out = out.substring(0, out.length - 1);
-        out += '],\ncontent: [';
-        desc.content.forEach(print);
-        out = out.substring(0, out.length - 1);
-        out += ']';
-        out += '},';
-        // out += '[' + desc.variables.toString() + ']\n';
-    });
-    out = out.substring(0, out.length - 1);
-    return out;
+var getFunctionArguments = function(fn) {
+    var fnString = fn.toString();
+    var argStartIndex = fnString.indexOf('(') + 1;
+    var argEndIndex = fnString.indexOf(')');
+    var argumentString = fnString.substring(argStartIndex, argEndIndex);
+    var argumentArray = argumentString.split(',');
+    return argumentArray.map(function(arg) { return arg.trim()});
 };
 
-var printBlock = function (block) {
-    var out = '{\n';
-    out += 'htmlString: "' + escape(block.htmlString) + '",\n';
-    out += 'elementDescriptors: [' + printElementDescriptors(block);
-    out += '],\n';
-    out += 'elementDescriptorIndices: ';
-    out += '[' + block.elementDescriptorIndices.toString() + '],\n';
-    out += 'elementCount: ' + block.elementCount + ',\n';
-    out += 'blockFunction: ' + blockFns['if']('1 == 2').toString();//(block.blockFunction && block.blockFunction.toString());
-    return out + '},\n\n'
+var getFunctionBody = function(fn) {
+    var fnStr = fn.toString();
+    var bodyStartIndex = fnStr.indexOf('{');
+    var bodyEndIndex = fnStr.indexOf('}');
+    return fnStr.substring(bodyStartIndex, bodyEndIndex);
 };
-//
-//var ElementDescriptor = function () {
-//    this.variables = [];
-//    this.content = [];
-//    this.index = 0;
-//};
-//
-//ElementDescriptor.prototype.notEmpty = function () {
-//    return this.variables.length !== 0 || this.content.length !== 0;
-//};
-//
-//var Block = function () {
-//    this.htmlString = '';
-//    this.elementDescriptors = [];
-//    this.elementDescriptorIndices = [];
-//    this.elementCount = 0;
-//    this.blockFunction = null;
-//};
+
 var tab = function(tabs) {
     var prefix = '';
     for(var i = 0; i < tabs; i++) {
@@ -352,6 +327,7 @@ var tab = function(tabs) {
     }
     return prefix;
 };
+
 var objToJs = function (object, depth) {
     var output = '';
     depth = depth || 1;
@@ -383,29 +359,5 @@ var objToJs = function (object, depth) {
     } else if (typeof object === 'function') {
         output += object.toString();
     }
-    //for (var key in object) {
-    //    if (object.hasOwnProperty(key)) {
-    //        var value = object[key];
-    //        console.log('value', value);
-    //        //if (Array.isArray(value)) {
-    //        //   // console.log(value, 'isArray');
-    //        //    output += '[';
-    //        //    for(var i = 0; i < value.length; i++) {
-    //        //        output += objToJs(value[i]);
-    //        //        if(i !== value.length - 1) {
-    //        //            output += ', ';
-    //        //        }
-    //        //    }
-    //        //    output += ']';
-    //        } else if (typeof value === 'object') {
-    //
-    //        } else if (typeof value === 'function') {
-    //
-    //        } else {
-    //            output += value;
-    //        }
-    //    }
-    //}
-    //  console.log(output);
     return output;
 };
