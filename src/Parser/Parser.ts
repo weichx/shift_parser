@@ -8,7 +8,7 @@ var HTMLParser = NodeHTMLParser.Parser;
 var Handler = NodeHTMLParser.DefaultHandler;
 var fs = require('fs');
 
-import Block = require('./Block');
+import Block = require('./../Structures/Block');
 
 var MUSTACHE_REGEX = /{{(.*?)}}/;
 

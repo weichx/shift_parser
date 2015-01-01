@@ -3,12 +3,11 @@ var typescript = require('gulp-tsc');
 var jasmine = require('gulp-jasmine');
 
 gulp.task('compile', function(){
-    gulp.src(['src/**/*.ts'])
+    return gulp.src(['**/*.ts'])
         .pipe(typescript({
             target: 'ES5',
             declaration: true,
-            sourcemap: true,
-            tscPath: 'node_modules/typescript/bin/tsc'
+            sourcemap: true
         }))
         .pipe(gulp.dest('dest/'))
 });

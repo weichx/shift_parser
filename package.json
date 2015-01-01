@@ -1,7 +1,11 @@
 {
+  "name": "Shift_Parser",
+  "repository": "",
+  "version": "1.0.0",
   "devDependencies": {
     "eyes": "^0.1.8",
     "gulp": "^3.8.10",
+    "gulp-jasmine": "^1.0.1",
     "gulp-tsc": "^0.9.2",
     "htmlparser": "^1.7.7",
     "jasmine-jquery": "^2.0.5",
