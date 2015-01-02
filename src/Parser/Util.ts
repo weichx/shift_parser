@@ -4,6 +4,9 @@ class Util {
     private static LEFT_TRIM_REGEX = /^\s+/;
     private static RIGHT_TRIM_REGEX = /\s+$/;
 
+    public get someProp() : number {
+        return 1;
+    }
     public static trimLeft(text : string) : string {
         return text.replace(Util.LEFT_TRIM_REGEX, '');
     }

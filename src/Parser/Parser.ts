@@ -11,6 +11,10 @@ class ShiftTemplateParser {
 
     public  static compileTemplateFromString(templateString : string, callback : (err, template) => void ) : void {
         var templateContent = ShiftTemplateParser.escapeTemplate(templateString);
+        //todo unsure we really want this, will need to explore pre blocks, inputs, textarea and content editable things
+        //this might be a struggle since we really want to collapse text elements down to one.
+
+        templateContent = templateContent.replace(/\s+/g, ' ');
         var handler = new Handler(function (error, ast : Array<ASTNode>) {
             if (error) {
                 callback(error, undefined);

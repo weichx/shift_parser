@@ -1,9 +1,19 @@
-<div id="0">
-
+{{interface
+    variable : Container;
+    anotherVar : string;
+    var : IThing;
+}}
+<div id="first">
+    some text {{variable.i.property}} more text {{anotherVar}}
+    <span id="otherElement">
+        <bold super="true">
+            Dont replace
+        </bold>
+        more text2 {{var}}
+    </span>
+    this is the pre block
+        string! {{var.stuff | date(MMDDYY) | date}}
+            other!
+    this is the post block
 </div>
 
-<span>
-    <ul>
-        <li></li>
-    </ul>
-</span>

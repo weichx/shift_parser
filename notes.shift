@@ -1,12 +1,23 @@
 {{interface
-anotherVar : string;
+    anotherVar : string;
+    arrayName : Array<Person>; //Object types other than Array(which gets converted to smart array)
+                               //MUST be of a concrete type that the user defines. Observers are generated for
+                               //that class and ALL classes that extend it.
+
+                                //when nested properties are accessed : they also have observers generated for them.
+
+        //an interesting idea might be to have a mode where true setX and getX fns are generated instead of
+        //property getters and setters. this would change the code style but boost performance significantly
+        //
 }}
+
 <div id="first">
     some text {{variable[i].property}} more text {{anotherVar}}
     <span id="otherElement">
         <bold super="{{true}}">Dont replace</bold>
         more text2 {{var}}
     </span>
+
     this is the pre block
     {{#if somevar == true && 1 > 2}}
         string! {{var | formatter0 | formatter1 }}
@@ -25,6 +36,7 @@ anotherVar : string;
             {{::default}}
         {{/switch}}
     {{/if}}
+
     this is the post block
     {{#if true}}
 
