@@ -68,4 +68,19 @@ the number of dom inserts, but this should be profiled.
 
 Formatters
     only valid in variable blocks or (maybe in injections?)
+    formatters (filters) are pre defined. when defined they can optionally specify variants. in a template
+    it would be :
+        {{someValue | inCurrency('dollars') | someOtherFormatterNoVariant }}
+        this compiles to : ['1', 'someValue', 'inCurrency_dollars', 'someOtherFormatterNoVariant']
+        the first array element denotes how many indices are part of the property chain.
+        then comes the property chain
+        then the formatters by name as 'formatterName_variantName'
+
+        when formatters are compiled they specify their variants as strings. at build time we use the formatter
+        name + _ + variantName to store these in a map that the templating system can use to look things up.
+
+        NOTE when chaining formatters, the output of the first must match the output of the second and so on
+        ie f0 -> string, string-> f1 is ok
+           f0 -> SomeObjectType, number -> f1 is not ok
+
 -->

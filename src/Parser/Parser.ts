@@ -1,48 +1,37 @@
-interface NodeHTMLParserType {
-    Parser : any;
-    DefaultHandler : any;
-}
-
 var NodeHTMLParser = <NodeHTMLParserType>require('htmlparser');
 var HTMLParser = NodeHTMLParser.Parser;
 var Handler = NodeHTMLParser.DefaultHandler;
 var fs = require('fs');
 
+import Visitor = require('./Visitor');
 import Block = require('./../Structures/Block');
 
-var MUSTACHE_REGEX = /{{(.*?)}}/;
-
-export class ShiftTemplateParser {
+class ShiftTemplateParser {
     private static handlerOptions = {ignoreWhitespace : true};
-    private static handlerFn = function(error, ast) {
-        if(error) {
-            console.log(error);
-        } else {
-            var parser = new ShiftTemplateParser(ast);
-            parser.parse();
-        }
-    };
-    private static handler = new Handler(ShiftTemplateParser.handlerFn, ShiftTemplateParser.handlerOptions);
-    private static htmlParser = new HTMLParser(ShiftTemplateParser.handler);
 
-    constructor(ast : Object) {
-
+    public  static compileTemplateFromString(templateString : string, callback : (err, template) => void ) : void {
+        var templateContent = ShiftTemplateParser.escapeTemplate(templateString);
+        var handler = new Handler(function (error, ast : Array<ASTNode>) {
+            if (error) {
+                callback(error, undefined);
+            } else {
+                var template = Visitor.constructTemplate(ast);
+                callback(undefined, template);
+            }
+        }, ShiftTemplateParser.handlerOptions);
+        var htmlParser = new HTMLParser(handler);
+        htmlParser.parseComplete(templateContent);
     }
 
-    public static compileTemplate(templatePath : string) {
-        var handler = new Handler(ShiftTemplateParser.handlerFn, ShiftTemplateParser.handlerOptions);
+    public static compileTemplateFromFile(templatePath : string, callback : (err, template) => void) {
         fs.readFile(templatePath, 'utf-8', function (err, fileContents) {
-            var templateContent = ShiftTemplateParser.escapeTemplate(fileContents);
-            ShiftTemplateParser.htmlParser.parseComplete(templateContent);
+            if (err) {
+                console.log(err);
+                callback(err, undefined);
+            } else {
+               ShiftTemplateParser.compileTemplateFromString(fileContents, callback);
+            }
         });
-    }
-
-    private parse() : void {
-
-    }
-
-    private handlerFunction() {
-
     }
 
     private static escapeTemplate(templateString : string) : string {
@@ -51,3 +40,5 @@ export class ShiftTemplateParser {
         });
     }
 }
+
+export = ShiftTemplateParser;
