@@ -57,7 +57,26 @@ describe('Util', function() {
     });
 
     it("should extract a formatter chain", function() {
-        var mustache = "variablename | formatter0 |formatter1(variant) | formatter2";
-        expect(Util.extractFormatterChain(mustache)).toEqual(['formatter0', 'formatter1_variant', 'formatter2']);
+        var mustache = "variablename | formatter0( variant ) |formatter1   (variant) | formatter2";
+        expect(Util.extractFormatterChain(mustache)).toEqual(['formatter0_variant', 'formatter1_variant', 'formatter2']);
+    });
+
+    it('validates variable names', function() {
+        var name0 = 'legal';
+        var name1 = ' legal ';
+        var name2 = '\t\t\n legal';
+        var name3 = '5nope';
+        var name4 = 'not ok';
+        var name5 = '$legal';
+        var name6 = '_legal';
+        expect(Util.isValidVariableName(name0)).toBeTruthy();
+        expect(Util.isValidVariableName(name1)).toBeTruthy();
+        expect(Util.isValidVariableName(name2)).toBeTruthy();
+        expect(Util.isValidVariableName(name3)).toBeFalsy();
+        expect(Util.isValidVariableName(name4)).toBeFalsy();
+        expect(Util.isValidVariableName(name5)).toBeTruthy();
+        expect(Util.isValidVariableName(name6)).toBeTruthy();
+
+
     });
 });

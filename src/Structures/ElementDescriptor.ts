@@ -1,6 +1,6 @@
 class ElementDescriptor {
-    public variables : Array<String> = [];
-    public content: Array<String> = [];
+    public variables : Array<string> = [];
+    public content: Array<string> = [];
     public index: number = 0;
 
     constructor(index : number) {

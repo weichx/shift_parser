@@ -15,8 +15,12 @@ class ShiftTemplateParser {
             if (error) {
                 callback(error, undefined);
             } else {
-                var template = Visitor.constructTemplate(ast);
-                callback(undefined, template);
+                try {
+                    var template = Visitor.constructTemplate(ast);
+                    callback(undefined, template);
+                } catch (ex) {
+                    callback(ex, undefined);
+                }
             }
         }, ShiftTemplateParser.handlerOptions);
         var htmlParser = new HTMLParser(handler);
