@@ -1,14 +1,17 @@
 import Block = require('../Structures/Block');
 import Template = require('../Structures/Template');
+import TemplateInterface = require('../Structures/TemplateInterface');
 import Util = require('./Util');
 import ParserError = require('./ParserError');
 
-var inspect = require('eyes').inspector({styles : {all : 'magenta'}});
+var inspect = require('eyes').inspector({styles: {all: 'magenta'}});
 
 class Visitor {
 
     private template : Template = new Template();
     private currentBlock : Block = new Block();
+    private userDefinedVariables : Array<string> = [];
+    public static TEST : boolean = false;
 
     constructor() {
         this.template.addBlock(this.currentBlock);
@@ -20,6 +23,7 @@ class Visitor {
             visitor.visit(element);
         });
         visitor.currentBlock.closeElementDescriptor();
+        visitor.validateVariables();
         return visitor.template;
     }
 
@@ -56,7 +60,7 @@ class Visitor {
             var splitText = Util.splitOnMustaches(text);
             splitText.forEach(function (element, i) {
                 if (i % 2 != 0) {
-                    visitor.visitMustacheVariable(element);
+                    visitor.visitMustache(element);
                 } else {
                     visitor.visitInnerText(element);
                 }
@@ -66,7 +70,19 @@ class Visitor {
         }
     }
 
+    private visitMustache(mustache : string) : void {
+        mustache = Util.unescape(mustache).trim();
+        if (mustache.indexOf('interface') === 0) {
+            this.createTemplateInterface(mustache);
+        } else {
+            this.visitMustacheVariable(mustache);
+        }
+    }
+
     private visitMustacheVariable(variableName : string) {
+        if(this.userDefinedVariables.indexOf(variableName) === -1) {
+            this.userDefinedVariables.push(variableName);
+        }
         if (!Util.isOnlyWhitespace(variableName)) {
             //todo ensure template defines this variable
             var htmlString = this.currentBlock.htmlString;
@@ -111,8 +127,70 @@ class Visitor {
         this.currentBlock.pushContent(Util.removeNewLines(text));
     }
 
+    private createTemplateInterface(mustache : string) : void {
+        if(this.template.templateInterface) {
+            var error = new Error("Multiple interface blocks are not allowed!");
+            error['errorType'] = ParserError.MultipleInterfaceBlocks;
+            throw error;
+        }
+        //todo for now assume this is well formatted, will also need to check for complex return types
+        //replace all whitespace with ''
+        //replace all semi colons with :
+        //split on :
+        //win
+        var mustacheNameStartIndex = mustache.indexOf('interface') + 'interface'.length;
+        mustache = mustache.substring(mustacheNameStartIndex + 1);
+        mustache = mustache.replace(/\s+/g, '');
+        mustache = mustache.replace(/;/g, ':');
+
+        var split = mustache.split(":");
+        if ((split.length - 1) % 2 !== 0) {
+            var error = new Error("Error when parsing interface block, unable to match types to variables, be sure to end with ;");
+            error['errorType'] = ParserError.NotSemiColonDelimited;
+            throw error;
+        }
+        var templateInterface = new TemplateInterface();
+        //-1 for the extra '' in split from ; -> : replacement
+        for (var i = 0; i < split.length - 1; i = i + 2) {
+            var variableName = split[i];
+            var variableType = split[i + 1];
+            if (!Util.isValidVariableName(variableName)) {
+                var error = new Error(variableName + " is not a valid variable name");
+                error['errorType'] = ParserError.ParseInterfaceInvalidVariableName;
+                throw error;
+            }
+            if (!Util.isValidVariableType(variableType)) {
+                //todo nicer error message
+                var error = new Error(variableName + " is not a supported variable type");
+                error['errorType'] = ParserError.ParseInterfaceUnsupportedVariableType;
+                throw error
+            }
+            templateInterface.addVariable(variableName, variableType);
+        }
+        this.template.templateInterface = templateInterface;
+    }
+
+    private validateVariables() : void {
+        if(!Visitor.TEST) {
+            var shouldThrow = false;
+            if (this.template.templateInterface) {
+                var templateVariables = this.template.templateInterface.variables;
+                var userDefinedVariables = this.userDefinedVariables;
+                shouldThrow = !userDefinedVariables.every(function(variable) {
+                    return <boolean>templateVariables[variable];
+                });
+            } else {
+                if (this.userDefinedVariables.length !== 0) {
+                    shouldThrow = true;
+                }
+            }
+            if(shouldThrow) {
+                var error = new Error("You must define variables in an interface block before using them." + this.userDefinedVariables);
+                error['errorType'] = ParserError.UndeclaredVariables;
+                throw error;
+            }
+        }
+    }
 }
 
 export = Visitor;
-//<div id="someId">someText<span class="test">moretext</span></div>
-//<div id="someId">someText<span class="test">moretext</span>

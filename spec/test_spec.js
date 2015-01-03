@@ -1,6 +1,6 @@
 var Parser = require('../dest/Parser/Parser.js');
 var ParserError = require('../dest/Parser/ParserError.js');
-
+Parser.TEST = true;
 describe("Visitor plain html parsing", function () {
     it("Runs", function () {
         expect(true).toBe(true);
@@ -53,6 +53,11 @@ describe("Visitor plain html parsing", function () {
             expect(template.blocks[0].htmlString).toEqual('<div>some content<span>more content</span></div>');
             done();
         });
+    });
+
+    it("escapes < & > inside {{ }}", function() {
+        var templateString = '<div>{{\n>\n<}}</div>';
+        expect(Parser['escapeTemplate'](templateString)).toEqual('<div>{{\n&gt;\n&lt;}}</div>')
     });
 });
 

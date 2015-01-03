@@ -1,5 +1,10 @@
 enum ParserError {
-    InvalidVariableName
+    InvalidVariableName,
+    ParseInterfaceInvalidVariableName,
+    ParseInterfaceUnsupportedVariableType,
+    NotSemiColonDelimited,
+    MultipleInterfaceBlocks,
+    UndeclaredVariables
 }
 
 export = ParserError;

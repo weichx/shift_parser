@@ -8,6 +8,7 @@ import Block = require('./../Structures/Block');
 
 class ShiftTemplateParser {
     private static handlerOptions = {ignoreWhitespace : true};
+    private static TEST : boolean = false;
 
     public  static compileTemplateFromString(templateString : string, callback : (err, template) => void ) : void {
         var templateContent = ShiftTemplateParser.escapeTemplate(templateString);
@@ -20,6 +21,7 @@ class ShiftTemplateParser {
                 callback(error, undefined);
             } else {
                 try {
+                    Visitor.TEST = ShiftTemplateParser.TEST;
                     var template = Visitor.constructTemplate(ast);
                     callback(undefined, template);
                 } catch (ex) {
@@ -37,13 +39,15 @@ class ShiftTemplateParser {
                 console.log(err);
                 callback(err, undefined);
             } else {
-               ShiftTemplateParser.compileTemplateFromString(fileContents, callback);
+               ShiftTemplateParser.compileTemplateFromString(fileContents.toString(), callback);
             }
         });
     }
 
     private static escapeTemplate(templateString : string) : string {
-        return templateString.replace(/\{\{.*?\}\}/g, function (match) {
+        //escape all < and > inside {{ }} without touching < and > that are outside of {{ }}
+        //in JS . does not match new lines, so add (.|[\r\n]) to also match new lines
+        return templateString.replace(/\{\{(.|[\r\n])*?\}\}/g, function (match) {
             return match.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         });
     }

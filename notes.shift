@@ -8,7 +8,7 @@
 
         //an interesting idea might be to have a mode where true setX and getX fns are generated instead of
         //property getters and setters. this would change the code style but boost performance significantly
-        //
+        //it might be possible to require a 'interface' defining sets and gets for template-used properties
 }}
 
 <div id="first">

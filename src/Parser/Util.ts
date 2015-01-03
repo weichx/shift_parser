@@ -1,8 +1,10 @@
 class Util {
     private static LEGAL_VAR_NAME_REGEX = /^[$A-Z_][0-9A-Z_$]*$/i;
-    private static MUSTACHE_REGEX_CONSUME = /{{(.*?)}}/;
-    private static LEFT_TRIM_REGEX = /^\s+/;
-    private static RIGHT_TRIM_REGEX = /\s+$/;
+    //todo make a LEGAL_TYPE_NAME_REGEX similar to variable name
+    private static MUSTACHE_REGEX_CONSUME : RegExp = /{{(.*?)}}/;
+    private static LEFT_TRIM_REGEX : RegExp = /^\s+/;
+    private static RIGHT_TRIM_REGEX : RegExp = /\s+$/;
+    private static SPACE_CONDENSE_REGEX : RegExp = /\s+/g;
 
     public static trimLeft(text : string) : string {
         return text.replace(Util.LEFT_TRIM_REGEX, '');
@@ -14,6 +16,10 @@ class Util {
 
     public static removeNewLines(text : string) : string {
         return text.replace(/\r?\n|\r/g, '');
+    }
+
+    public static removeNewLinesAndTabs(text : string, replacement : string = '') : string {
+        return text.replace(/\r?\n|\r|\t/g, replacement);
     }
 
     public static splitOnMustaches(text : string) : Array<string> {
@@ -81,18 +87,47 @@ class Util {
 
     //todo handle bracket case: something[ i ] should be ok
     public static isValidVariableName(variableNameString) : boolean {
-            variableNameString = variableNameString.trim();
-            for (var i = variableNameString; i < variableNameString.length; i++) {
-                if (Util.isOnlyWhitespace(variableNameString[i])) {
-                    return false;
-                }
+        variableNameString = variableNameString.trim();
+        for (var i = variableNameString; i < variableNameString.length; i++) {
+            if (Util.isOnlyWhitespace(variableNameString[i])) {
+                return false;
             }
-            var splitPath = variableNameString.split('.');
-            return splitPath.every(function(element) {
-                return element.match(Util.LEGAL_VAR_NAME_REGEX);
-            });
+        }
+        var splitPath = variableNameString.split('.');
+        return splitPath.every(function (element) {
+            return <boolean>element.match(Util.LEGAL_VAR_NAME_REGEX);
+        });
     }
 
+    public static isValidVariableType(variableType) : boolean {
+        //todo will have to validate generics :(
+        //todo make sure arrays dont have anything in the braces
+        //todo make sure arrays are defined as type[] not []type
+        if (variableType === '::complex' ||
+            variableType === 'any' ||
+            variableType === 'void' ||
+            Util.isReservedWord(variableType) ||
+            variableType.indexOf('(') !== -1 ||
+            variableType.indexOf('{') !== -1
+        ) {
+            return false;
+        }
+        //todo probably needs more parsing to validate
+        return true;
+    }
+
+    //todo expand this list
+    public static isReservedWord(str : string) : boolean {
+        return ['null', 'undefined'].indexOf(str) !== -1;
+    }
+
+    public static condenseSpacing(str : string) : string {
+        return str.replace(Util.SPACE_CONDENSE_REGEX, ' ');
+    }
+
+    public static unescape(str : string) : string {
+        return str.replace(/&lt;/g, '>').replace(/&gt;/g, '>');
+    }
 }
 
 export = Util;
