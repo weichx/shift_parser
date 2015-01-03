@@ -41,7 +41,7 @@ describe("Visitor plain html parsing", function () {
         var templateString = '<div>\nsome content\n\n<span>\nmore\ncontent</span></div>';
         Parser.compileTemplateFromString(templateString, function (error, template) {
             expect(error).toBeUndefined();
-            expect(template.blocks[0].htmlString).toEqual(templateString.replace(/\n/g, ''));
+            expect(template.blocks[0].htmlString).toEqual('<div>some content<span>more content</span></div>');
             done();
         });
     });

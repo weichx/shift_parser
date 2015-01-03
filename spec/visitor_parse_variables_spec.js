@@ -97,7 +97,7 @@ describe('Visitor Parsing Variables (no variable validation)', function () {
         Parser.compileTemplateFromString(templateString, function (error, template) {
             expect(error).toBeUndefined();
             expect(template.blocks[0].elementDescriptors[0].content).toEqual(['someText', ' moar content']);
-            done();
+           done();
         });
     });
 });

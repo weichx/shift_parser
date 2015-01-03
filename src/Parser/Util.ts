@@ -1,12 +1,9 @@
 class Util {
-    private static LEGAL_VAR_NAME_REGEX = /^[$A-Z_][0-9A-Z_$]*$/i; ///^[a-zA-Z][a-zA-Z0-9]*?$/;
+    private static LEGAL_VAR_NAME_REGEX = /^[$A-Z_][0-9A-Z_$]*$/i;
     private static MUSTACHE_REGEX_CONSUME = /{{(.*?)}}/;
     private static LEFT_TRIM_REGEX = /^\s+/;
     private static RIGHT_TRIM_REGEX = /\s+$/;
 
-    public get someProp() : number {
-        return 1;
-    }
     public static trimLeft(text : string) : string {
         return text.replace(Util.LEFT_TRIM_REGEX, '');
     }
@@ -95,6 +92,7 @@ class Util {
                 return element.match(Util.LEGAL_VAR_NAME_REGEX);
             });
     }
+
 }
 
 export = Util;

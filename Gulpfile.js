@@ -1,8 +1,9 @@
 var gulp = require('gulp');
+var gulpShell = require('gulp-shell');
 var typescript = require('gulp-tsc');
 var jasmine = require('gulp-jasmine');
 
-gulp.task('compile', function (done) {
+gulp.task('compile', function () {
     var stream = gulp.src(['src/**/*.ts'])
         .pipe(typescript({
             target: 'ES5',
@@ -10,10 +11,10 @@ gulp.task('compile', function (done) {
             sourcemap: true
         }))
         .pipe(gulp.dest('dest/'));
-    stream.on('end', done);
     stream.on('error', function (error) {
-        done(error);
+        console.log('error');
     });
+    return stream;
 });
 
 gulp.task('jasmine', ['compile'], function () {
@@ -21,3 +22,13 @@ gulp.task('jasmine', ['compile'], function () {
 });
 
 gulp.task('test', ['compile', 'jasmine']);
+
+var fs = require('fs');
+
+gulp.task('test_parse', ['compile'], function() {
+    var DTSParser = require('./dest/DTSParser/DTSParser');
+    var str = fs.readFileSync('dest/Parser/Util.d.ts').toString();
+    var parser = new DTSParser();
+    parser.parse(str);
+    return gulp.src('');
+});
