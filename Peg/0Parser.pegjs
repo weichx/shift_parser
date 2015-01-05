@@ -1,3 +1,16 @@
+{
+    var ErrorMessages = {
+        default_has_content: 'Default blocks should not have content in their headers'
+    };
+
+    var explode = function(str, lineFn, colFn) {
+        error(str + ' line: ' + lineFn() + ' column: ' + colFn());
+    }
+
+    var explodeWith = function(err, lineFn, colFn) {
+        error(ErrorMessages[err] + ' line: ' + lineFn() + ' column: ' + colFn());
+    }
+}
 //todo escape mustaches (maybe triple {)
 StartProgram = program: StartRule { return program; }
 
@@ -143,8 +156,12 @@ MustacheBlockIntermediate
 MustacheIBlockElse =
     MustacheOpenCharacters __
     MustacheBlockIntermediateChar __
-    "else"i __
+    !"elseif"i "else"i __
+    content: GetMustacheContent
     MustacheCloseCharacters {
+    if(content != '') {
+        error('Else block headers cannot have content. Line: ' + line() + ", column: " + column());
+    }
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
@@ -156,11 +173,16 @@ MustacheIBlockElseIf =
     MustacheOpenCharacters __
     MustacheBlockIntermediateChar __
     "elseif"i __
+    expression: GetMustacheContent
     MustacheCloseCharacters {
+    if(expression.trim() == '') {
+        explode('Elseif block headers must declare an expression resulting in a boolean value', line, column)
+    }
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
-        name: 'elseif'
+        name: 'elseif',
+        expression: expression
     }
 }
 
@@ -182,7 +204,11 @@ MustacheIBlockDefault =
     MustacheOpenCharacters __
     MustacheBlockIntermediateChar __
     "default"i __
+    content: GetMustacheContent
     MustacheCloseCharacters {
+    if(content.trim() !== '') {
+        explodeWith('default_has_content', line, col);
+    }
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
