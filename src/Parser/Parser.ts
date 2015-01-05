@@ -52,5 +52,4 @@ class ShiftTemplateParser {
         });
     }
 }
-
 export = ShiftTemplateParser;

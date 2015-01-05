@@ -53,6 +53,16 @@ first block in each template file must be {{interface}}, this is not compiled in
 literals found in variables are allowed as attributes but not as content. <div attr={{'name'}}> is fine. {{'name'}} alone is not.
 literals in blocks are fine.
 
+
+Todo: think about adding a compute type. it starts with {{=>}} and contains code that copmiles into a function.
+the function is reinvoked when one if it's variables changes. It can have formatter chains. The return value is rendered as though it was a variable
+
+This is not a block but looks like this:
+
+{{=>
+    var0 + var1 * var3 | currency(dollar)
+}}
+
 Blocks
     if/elseif/else
     forin -> key, value. maybe dont include this, will depend on how object key observation comes out.
@@ -96,3 +106,97 @@ Formatters
            f0 -> SomeObjectType, number -> f1 is not ok
 
 -->
+
+
+{{interface
+
+myVar : string;
+myVar : Address(Src/Address)
+
+}}
+
+{{interface
+
+myVar : string;
+myVar : Address
+
+}}
+{{#if => (myVar, someArray)
+var x = myVar -> currency === || myOther && something != !== + - * / [0-9] .
+x()
+}}
+
+    {{#if myVar && yourVar && myVar > 10}}
+        {{#if ::var && &var2 && &var3}}
+
+            //if option 1
+            only value types, arthitmetic operators & variables & literals: no indexing, no function calling
+            if option2
+            treat it as a compute block, inject stuff at the top, turn off observers, let you go wild
+
+            {{var}} {{/if }}  {{var}}
+
+        {{#if ! % ^ & * () - + | [] . < > = \ \''\"" , / ~ { } :
+
+optimize for rending speed and  convience
+
+<panel _id="panel" material="myMaterial">
+    {{&myStreetName => (p) p.getAddress(); }}
+
+    {{&people, &constant => (people)
+        ArrayFilter.orderBy(name)
+        [people, 'someConstant']
+    }}
+
+    {{#foreach people | reverse | orderBy('name') >> person:p index:i, address:&p.address}}
+        <panelItem displayinfo="{{&p.name}}" material="{{=> (&p, houseColors) houseColors.get(p.address)}}"/>
+        <super-custom-element>
+
+        </super-custom-element>
+        {{#if => (p, &myStreetName) p.address.street.name === &myStreetName}}
+
+        {{/if}}
+    {{/foreach}}
+</panel>
+
+    foreach (arrayName | blockVariableOfTypeArray | array literal) | filter | filter >> variable declarations
+
+
+{{#if => (myVar, someArray)
+var x = myVar -> currency === || myOther && something != !== + - * / [0-9] .
+x()
+}}
+
+    {{#if myVar && yourVar && myVar > 10}}
+        {{#if ::var && &var2 && &var3}}
+
+            //if option 1
+            only value types, arthitmetic operators & variables & literals: no indexing, no function calling
+            if option2
+            treat it as a compute block, inject stuff at the top, turn off observers, let you go wild
+
+            {{var}} {{/if }}  {{var}}
+
+        optimize for rending speed >> convience
+        user cannot define getters or setters for properties used in templates
+
+        <panel _id="panel" material="myMaterial">
+            {{&myStreetName => (p) p.getAddress(); }}
+
+            {{&people, &constant => (people)
+            ArrayFilter.orderBy(name)
+            [people, 'someConstant']
+            }}
+
+            {{#foreach people | reverse | orderBy('name') >> person:p index:i, address:&p.address}}
+                <panelItem displayinfo="{{&p.name}}" material="{{=> (&p, houseColors) houseColors.get(p.address)}}"/>
+                <super-custom-element>
+
+                </super-custom-element>
+                {{#if => (p, &myStreetName) p.address.street.name === &myStreetName}}
+
+                {{/if}}
+            {{/foreach}}
+        </panel>
+
+        foreach (arrayName | blockVariableOfTypeArray | array literal) | filter | filter >> variable declarations

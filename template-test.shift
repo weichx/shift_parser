@@ -1,0 +1,4 @@
+{{#if true}}
+    {{::else}}
+    {{::case var.x > &p }}
+{{/if}}

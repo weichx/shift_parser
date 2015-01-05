@@ -1,7 +1,9 @@
 var gulp = require('gulp');
-var gulpShell = require('gulp-shell');
 var typescript = require('gulp-tsc');
 var jasmine = require('gulp-jasmine');
+var peg = require('pegjs');
+var concat = require('gulp-concat');
+var eyes = require('eyes');
 
 gulp.task('compile', function () {
     var stream = gulp.src(['src/**/*.ts'])
@@ -32,3 +34,65 @@ gulp.task('test_parse', ['compile'], function() {
     parser.parse(str);
     return gulp.src('');
 });
+
+gulp.task('compilePeg', function() {
+    return gulp.src('peg/**/*.pegjs')
+        .pipe(concat('PegParser.pegjs'))
+        .pipe(gulp.dest('./'));
+});
+
+gulp.task('peg', ['compilePeg'], function() {
+    var str = fs.readFileSync('PegParser.pegjs').toString();
+    var template = fs.readFileSync('template-test.shift').toString();
+    try {
+        var startBuild = Date.now();
+        var parser = peg.buildParser(str);
+        console.log('parser build time: ' + (Date.now() - startBuild));
+
+        var startParse = Date.now();
+        eyes.inspect(parser.parse(template, {startRule: 'StartProgram'}), {maxLength: 10000});
+        console.log('parse time: ' + (Date.now() - startParse));
+
+    } catch(e) {
+        console.log(e);
+    }
+});
+
+gulp.task('testpeg', function() {
+    return gulp.src('spec/parser_format_spec.js').pipe(jasmine({includeStackTrace: true}));
+});
+
+[
+    'PreContent',
+    [
+        [
+            {
+                type: 'HTMLElement',
+                tag: 'html',
+                attributes: null,
+                closed: true,
+                children: [
+                    [
+                        {
+                            type: 'HTMLElement',
+                            tag: 'child',
+                            attributes: null,
+                            closed: true,
+                            children: null
+                        }
+                    ],
+                    [
+                        {
+                            type: 'HTMLElement',
+                            tag: 'child1',
+                            attributes: null,
+                            closed: true,
+                            children: null
+                        }
+                    ]
+                ]
+            },
+            'PostContent'
+        ]
+    ]
+]
