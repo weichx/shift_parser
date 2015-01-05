@@ -1,6 +1,6 @@
 {{#if true}}
-    {{case 0}}
-    {{default}}
+    {{::case 0}}
+    {{::default}}
     {{::else}}
-    {{::elseif }}
+    {{::elseif c}}
 {{/if}}

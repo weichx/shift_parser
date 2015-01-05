@@ -497,6 +497,19 @@ describe('PegParser', function () {
                 parser.parse(template)
             }).toThrow();
         });
+
+
+        it('cannot be overlapped by another block', function() {
+
+        });
+
+        it('cannot be overlapped by html', function() {
+
+        });
+
+        it('can take a compute block', function() {
+
+        });
     });
 
     describe('elseif intermediate block', function() {
@@ -525,6 +538,22 @@ describe('PegParser', function () {
         });
 
         it('is not required to have children', function() {
+
+        });
+
+        it('can have children', function() {
+
+        });
+
+        it('cannot be overlapped by another block', function() {
+
+        });
+
+        it('cannot be overlapped by html', function() {
+
+        });
+
+        it('can take a compute block', function() {
 
         });
     });
@@ -557,6 +586,22 @@ describe('PegParser', function () {
         it('is not required to have children', function() {
 
         });
+
+        it('can have children', function() {
+
+        });
+
+        it('cannot be overlapped by another block', function() {
+
+        });
+
+        it('cannot be overlapped by html', function() {
+
+        });
+
+        it('cannot take a compute block', function() {
+
+        });
     });
 
     describe('default intermediate block', function() {
@@ -585,6 +630,18 @@ describe('PegParser', function () {
         });
 
         it('is not required to have children', function() {
+
+        });
+
+        it('can have children', function() {
+
+        });
+
+        it('cannot be overlapped by another block', function() {
+
+        });
+
+        it('cannot be overlapped by html', function() {
 
         });
     });

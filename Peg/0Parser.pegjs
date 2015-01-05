@@ -1,6 +1,7 @@
 {
     var ErrorMessages = {
-        default_has_content: 'Default blocks should not have content in their headers'
+        default_has_content: 'Default blocks should not have content in their headers',
+        case_requires_argument: 'Case statements must have an expression to match against'
     };
 
     var explode = function(str, lineFn, colFn) {
@@ -145,7 +146,7 @@ MustacheBlockSwitchOpen "SWITCH BLOCK"
         headerContent: headerContent
     };
 }
-/***************** Intermediat Blocks **************************/
+/***************** Intermediate Blocks **************************/
 
 MustacheBlockIntermediate
     = MustacheIBlockElse
@@ -192,6 +193,9 @@ MustacheIBlockCase =
     "case"i __
     expression: GetMustacheContent
     MustacheCloseCharacters {
+    if(expression.trim() === '') {
+        explodeWith('case_requires_argument', line, column);
+    }
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
