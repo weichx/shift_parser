@@ -36,7 +36,7 @@ gulp.task('test_parse', ['compile'], function() {
 });
 
 gulp.task('compilePeg', function() {
-    return gulp.src('peg/**/*.pegjs')
+    return gulp.src(['peg/0_HeaderJSCode.js', 'peg/**/*.pegjs'])
         .pipe(concat('PegParser.pegjs'))
         .pipe(gulp.dest('./'));
 });
@@ -58,41 +58,7 @@ gulp.task('peg', ['compilePeg'], function() {
     }
 });
 
-gulp.task('testpeg', function() {
-    return gulp.src('spec/parser_format_spec.js').pipe(jasmine({includeStackTrace: true}));
+gulp.task('testpeg', ['compilePeg'], function() {
+    return gulp.src(['spec/ParserFormat/**/*_spec.js']).pipe(jasmine({includeStackTrace: true}));
 });
 
-[
-    'PreContent',
-    [
-        [
-            {
-                type: 'HTMLElement',
-                tag: 'html',
-                attributes: null,
-                closed: true,
-                children: [
-                    [
-                        {
-                            type: 'HTMLElement',
-                            tag: 'child',
-                            attributes: null,
-                            closed: true,
-                            children: null
-                        }
-                    ],
-                    [
-                        {
-                            type: 'HTMLElement',
-                            tag: 'child1',
-                            attributes: null,
-                            closed: true,
-                            children: null
-                        }
-                    ]
-                ]
-            },
-            'PostContent'
-        ]
-    ]
-]

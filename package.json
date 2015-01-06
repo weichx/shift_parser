@@ -3,6 +3,7 @@
   "repository": "",
   "version": "1.0.0",
   "devDependencies": {
+    "esprima": "^1.2.2",
     "eyes": "^0.1.8",
     "gulp": "^3.8.10",
     "gulp-concat": "^2.4.3",

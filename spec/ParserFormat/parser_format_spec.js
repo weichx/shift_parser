@@ -1,7 +1,11 @@
-var fs = require('fs');
-var peg = require('pegjs');
-var parserSrc = fs.readFileSync('PegParser.pegjs').toString();
-var parser = peg.buildParser(parserSrc);
+var testHelper = require('./test_helpers');
+var ErrorMessage = testHelper.ErrorMessage;
+var customMatchers = testHelper.customMatchers;
+var parser = testHelper.parser;
+
+beforeEach(function() {
+    jasmine.addMatchers(customMatchers);
+});
 
 describe('PegParser', function () {
     it('can handle an empty document', function () {
@@ -363,14 +367,14 @@ describe('PegParser', function () {
         });
 
         it("will allow unmatched mustaches inside a block if they are part of a string", function() {
-            var template = '<div>{{#if "}" v = {x: {}}; }}{{/  if  }}</div>';
+            var template = '<div>{{#if z = "}"; v = {x: {}}; }} {{/  if  }}</div>';
             expect(function () {
                 parser.parse(template)
             }).not.toThrow();
         });
 
         it('will allow html inside of mustache block header (if not in string the runtime will throw an error, not handled in parser)', function() {
-            var template = '<div>{{#if "}" <div></div>v = {x: {}}; }}{{/  if  }}</div>';
+            var template = '<div>{{#if "<div></div>"; v = {x: {}}; }}{{/  if  }}</div>';
             expect(function () {
                 parser.parse(template)
             }).not.toThrow();
@@ -415,9 +419,9 @@ describe('PegParser', function () {
             }).not.toThrow();
         });
 
-        //it('allows template variables to have a compute block', function() {
-        //
-        //});
+        it('allows template variables to have a compute block', function() {
+
+        });
         
     });
     
@@ -463,25 +467,25 @@ describe('PegParser', function () {
             var template = '{{#unless true}} {{::else}} {{::else}} <div></div> {{/unless}}';
             expect(function () {
                 parser.parse(template)
-            }).toThrow();
+            }).toThrowWithMessage(ErrorMessage.iBlockForbiddenDuplicate('else', 'unless'));
         });
 
         it('should not be in switch or foreach blocks', function() {
             var template = '{{#switch true}} {{::else}} {{/switch}}';
             expect(function () {
                 parser.parse(template)
-            }).toThrow();
+            }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('else', 'switch'));
             var template = '{{#foreach array >> index:i}} {{::else}} {{/foreach}}';
             expect(function () {
                 parser.parse(template)
-            }).toThrow();
+            }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('else', 'foreach'));
         });
 
         it('should not take content in its header', function() {
             var template = '{{#if true}} {{::else stuff}} {{/if}}';
             expect(function () {
                 parser.parse(template)
-            }).toThrow();
+            }).toThrowWithMessage(ErrorMessage.iBlockHeaderMustBeEmpty('else'));
         });
 
         it('should not care about spacing', function() {
@@ -492,15 +496,18 @@ describe('PegParser', function () {
         });
 
         it('should be the last child in an if or unless block', function() {
-            var template = '{{#if true}} {{ :: else }}  {{::elseif}} {{/if}}';
+            var template = '{{#if true}} {{ :: else }}  {{::elseif true}} {{/if}}';
             expect(function () {
                 parser.parse(template)
-            }).toThrow();
+            }).toThrowWithMessage(ErrorMessage.iBlockWrongOrder('elseif', 'else', 'if'));
         });
 
 
         it('cannot be overlapped by another block', function() {
-
+            var template = '{{#if true}} {{#unless a}} {{/if}} {{/unless}}';
+            expect(function() {
+                parser.parse(template);
+            }).toThrowWithMessage(ErrorMessage.mustacheBlockNotClosed('unless', 'if'));
         });
 
         it('cannot be overlapped by html', function() {

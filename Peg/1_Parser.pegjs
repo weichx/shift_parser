@@ -1,17 +1,4 @@
-{
-    var ErrorMessages = {
-        default_has_content: 'Default blocks should not have content in their headers',
-        case_requires_argument: 'Case statements must have an expression to match against'
-    };
 
-    var explode = function(str, lineFn, colFn) {
-        error(str + ' line: ' + lineFn() + ' column: ' + colFn());
-    }
-
-    var explodeWith = function(err, lineFn, colFn) {
-        error(ErrorMessages[err] + ' line: ' + lineFn() + ' column: ' + colFn());
-    }
-}
 //todo escape mustaches (maybe triple {)
 StartProgram = program: StartRule { return program; }
 
@@ -29,35 +16,39 @@ MustacheBlock "MustacheBlock" =
     close: MustacheBlockClose
     __
 {
-    if(open.tag !== close.tag) {
-        error(open.tag + " tag not closed");
-    }
+    Validators.ensureMustacheBlockClosed(open, close, line, column);
     return {
         type: 'MustacheBlock',
         tag: open.tag,
         headerContent: open.headerContent,
+        computeContent: open.computeContent,
         children: children
     }
 }
 
 MustacheBlockOpen =
 
-    MustacheOpenCharacters '#' header: MustacheBlockTypeOpen MustacheCloseCharacters {
+    MustacheOpenCharacters '#' header: MustacheBlockTypeOpen MustacheCloseCharacters
+{
+    blockStack.pushBlock(header.tag); //this might not be ok, depending on order of parsing.
     return {
         tag: header.tag,
-        headerContent: header.headerContent
+        headerContent: header.headerContent,
+        computeContent: header.computeContent
     }
 }
 
 MustacheBlockClose =
-    MustacheOpenCharacters '/' header: MustacheBlockTypeClose MustacheCloseCharacters {
+    MustacheOpenCharacters '/' header: MustacheBlockTypeClose MustacheCloseCharacters
+{
+    blockStack.popBlock();
     return {
         tag: header.tag,
         attributes: 'add later'
     }
 }
 
-Mustache "MustacheContent"
+Mustache "a Mustache tag"
     = MustacheBlock
     / MustacheBlockIntermediate
     / MustacheTemplateVariable
@@ -66,7 +57,7 @@ Mustache "MustacheContent"
     / MustacheVariable
 
 
-/*********************** BLocks **********************************/
+/*********************** Blocks **********************************/
 MustacheBlockTypeOpen
     = __ MustacheBlockIf      Whitespace open: MustacheBlockIfOpen      { return open; }
     / __ MustacheBlockUnless  Whitespace open: MustacheBlockUnlessOpen  { return open; }
@@ -93,31 +84,29 @@ MustacheBlockSwitch  = &('switch'i)  'switch'i
 
 
 MustacheBlockIfOpen "IF BLOCK"
-   = headerContent: GetMustacheContent
+   = computeHeader:GetComputeBlockHeader? headerContent: GetMustacheContent //get expression
 {
-    if(headerContent.trim() === '') {
-        error('At least one symbol is required inside the IF BLOCK header around line: ' + line() + " column: " + column());
-    }
+    Validators.validateBlockHeaderExpression('if', headerContent, line, column);
     return {
         tag: 'if',
-        headerContent: headerContent
+        headerContent: headerContent,
+        computeContent: computeHeader
     };
 }
-/ . { error("Unmatched { or } found inside IF BLOCK around line: " + line() + " column: " + column())}
-
+/ . { Validators.mustacheNotClosed('if', line, column) }
 
 
 MustacheBlockUnlessOpen "UNLESS BLOCK"
-    = headerContent: GetMustacheContent
+    = computeHeader:GetComputeBlockHeader? headerContent: GetMustacheContent //get expression
 {
-    if(headerContent.trim() === '') {
-        error('At least one symbol is required inside the UNLESS BLOCK header around line: ' + line() + " column: " + column());
-    }
+    Validators.validateBlockHeaderExpression('unless', headerContent, line, column);
     return {
         tag: 'unless',
-        headerContent: headerContent
+        headerContent: headerContent,
+        computeContent: computeHeader
     };
 }
+/ . { Validators.mustacheNotClosed('unless', line, column) }
 
 MustacheBlockForeachOpen "FOREACH BLOCK"
     = arrayName: IdentifierName
@@ -159,10 +148,11 @@ MustacheIBlockElse =
     MustacheBlockIntermediateChar __
     !"elseif"i "else"i __
     content: GetMustacheContent
-    MustacheCloseCharacters {
-    if(content != '') {
-        error('Else block headers cannot have content. Line: ' + line() + ", column: " + column());
-    }
+    MustacheCloseCharacters
+{
+    Validators.ensureIBlockEmpty('else', content, line, column);
+    Validators.ensureLegalIBlockPlacement('else', line, column);
+    blockStack.pushIBlock('else');
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
@@ -175,10 +165,13 @@ MustacheIBlockElseIf =
     MustacheBlockIntermediateChar __
     "elseif"i __
     expression: GetMustacheContent
-    MustacheCloseCharacters {
-    if(expression.trim() == '') {
-        explode('Elseif block headers must declare an expression resulting in a boolean value', line, column)
-    }
+    MustacheCloseCharacters
+{
+    Validators.ensureIBlockNotEmpty('elseif', expression, line, column);
+    Validators.ensureLegalIBlockPlacement('elseif', line, column);
+    Validators.validateBlockHeaderExpression('elseif', expression, line, column);
+    blockStack.pushIBlock('elseif');
+
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
@@ -192,10 +185,13 @@ MustacheIBlockCase =
     MustacheBlockIntermediateChar __
     "case"i __
     expression: GetMustacheContent
-    MustacheCloseCharacters {
-    if(expression.trim() === '') {
-        explodeWith('case_requires_argument', line, column);
-    }
+    MustacheCloseCharacters
+{
+    //todo this does not currently take a compute block, case statements should be constant.
+    //see if esprima can verify that for us. 1 identifier, variable, or primitve
+    Validators.ensureIBlockNotEmpty('case', content, line, column);
+    Validators.ensureLegalIBlockPlacement('case', line, column);
+    Validators.validateBlockHeaderExpression('case', content, line, column);
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
@@ -209,10 +205,10 @@ MustacheIBlockDefault =
     MustacheBlockIntermediateChar __
     "default"i __
     content: GetMustacheContent
-    MustacheCloseCharacters {
-    if(content.trim() !== '') {
-        explodeWith('default_has_content', line, col);
-    }
+    MustacheCloseCharacters
+{
+    Validators.ensureIBlockEmpty('default', content, line, column);
+    Validators.ensureLegalIBlockPlacement('default', line, column);
     return {
         type: 'Mustache',
         tag: 'intermediateBlock',
@@ -266,7 +262,19 @@ MustacheInterface =
 
 /********************* MISC ******************************/
 
-ComputeBlock = __ "=>" __ //to be extended
+ComputeBlockChar = __ "=>" __ //to be extended
+
+GetComputeBlockHeader = __ ComputeBlockChar __ args: ComputeBlockArgs? {
+    return args;
+}
+
+ComputeBlockArgs =
+    '(' __ &('&'? IdentifierName) '&'? IdentifierName ComputeBlockRestArgs* ')' {
+    return text();
+}
+
+ComputeBlockRestArgs=
+    __ ',' __ '&'?IdentifierName __
 
 Content "Content" =
     //and checks for existence without moving the poitner, allowing us to star content grabbing.
