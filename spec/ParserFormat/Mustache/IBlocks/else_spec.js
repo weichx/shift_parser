@@ -80,6 +80,13 @@ describe('else intermediate block', function() {
         }).toThrowWithMessage(ErrorMessage.mustacheBlockNotClosed('unless', 'if'));
     });
 
+    it('is case insensitive', function(){
+        var template = '{{#if y}} x {{::ElSe}} y{{/if}}';
+        expect(function() {
+            parser.parse(template);
+        }).not.toThrow();
+    });
+
     it('cannot be overlapped by html', function() {
         //todo implement
     });

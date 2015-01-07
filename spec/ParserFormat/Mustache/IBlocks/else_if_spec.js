@@ -47,4 +47,11 @@ describe('elseif intermediate block', function() {
     it('can take a compute block', function() {
 
     });
+
+    it('is case insensitive', function(){
+        var template = '{{#if y}} x {{::ElSeIf z}} y{{/if}}';
+        expect(function() {
+            parser.parse(template);
+        }).not.toThrow();
+    });
 });

@@ -47,4 +47,23 @@ describe('case intermediate block', function() {
     it('cannot take a compute block', function() {
 
     });
+
+    it('can take a string literal', function() {
+
+    });
+
+    it('can take a boolean literal', function() {
+
+    });
+
+    it('can take a number literal', function() {
+
+    });
+
+    it('is case insensitive', function(){
+        var template = '{{#switch y}}  {{::CaSe 1}} y{{/switch}}';
+        expect(function() {
+            parser.parse(template);
+        }).not.toThrow();
+    });
 });

@@ -2,52 +2,58 @@ var ErrorMessages = require('./ErrorMessages');
 var esprima = require('esprima');
 var esprimaparse = esprima.parse;
 
-var error = function() {
+var error = function () {
     throw new Error('Assign a real error thrower to this function');
 };
 
-esprima.parse = function() {
+esprima.parse = function () {
     try {
         esprimaparse.apply(esprimaparse, arguments);
-    } catch(e) {
+    } catch (e) {
         e.errorType = 'ESPRIMA JS ERROR';
         e.fileLine = line();
         throw e;
     }
 };
 
-var blockStack = new (function() {
+var blockStack = new (function () {
     this.blocks = [];
-    this.pushBlock = function(blockName) {
+    this.pushBlock = function (blockName) {
         this.blocks.push({
             blockType: blockName,
             iBlockList: []
         });
     };
 
-    this.popBlock = function() {
+    this.popBlock = function () {
         this.blocks.pop();
     };
 
-    this.topBlock = function() {
+    this.topBlock = function () {
         return this.blocks[this.blocks.length - 1];
     };
 
-    this.pushIBlock = function(iBlockName) {
+    this.pushIBlock = function (iBlockName) {
         this.topBlock() && this.topBlock().iBlockList.push(iBlockName);
     };
 
-    this.getLastIBlock = function() {
+    this.getLastIBlock = function () {
         var topBlock = this.blocks[this.blocks.length - 1];
         return topBlock && topBlock.iBlockList[topBlock.iBlockList.length - 1];
     };
 })();
 
 
-var useHandler = function(error) {
+var useHandler = function (error) {
 
-    var explode = function(str, lineFn, colFn) {
-        error(str + ' Line: ' + lineFn() + ' column: ' + colFn());
+    var explode = function (str, line, col) {
+        if (typeof line === 'function') {
+            line = line();
+        }
+        if (typeof col === 'function') {
+            col = col();
+        }
+        error(str + ' Line: ' + line + ' column: ' + col);
     };
 
     return {
@@ -87,6 +93,9 @@ var useHandler = function(error) {
                     if (lastBlockType !== 'switch') {
                         explode(ErrorMessages.iBlockNotAllowedHere(iBlockType, lastBlockType), line, column);
                     }
+                    if (lastIBlock === 'default') {
+                        explode(ErrorMessages.iBlockForbiddenDuplicate('default', 'switch'), line, column);
+                    }
                     break;
                 case 'case':
                     if (lastBlockType !== 'switch') {
@@ -105,16 +114,28 @@ var useHandler = function(error) {
                 esprima.parse(content);
             }
         },
-        mustacheNotClosed: function(blockType, line, column) {
+        mustacheNotClosed: function (blockType, line, column) {
             explode(ErrorMessages.unmatchedOpenOrCloseMustache(blockType), line, column);
         },
-        ensureMustacheBlockClosed: function(open, close, line, column) {
-            if(open.tag !== close.tag) {
+        ensureMustacheBlockClosed: function (open, close, line, column) {
+            if (open.tag !== close.tag) {
                 explode(ErrorMessages.mustacheBlockNotClosed(open.tag, close.tag), line, column);
             }
         },
-        unknownBlockType: function(name, line, column) {
-            switch(name.trim()) {
+        ensureLegalSwitchChildren: function (children, line, column) {
+            //loop until case or default or non whitespace content
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                if (child.tag === 'intermediateBlock' && child.name === 'default' || child.name === 'case') {
+                    break;
+                }
+                if (child.type === 'Mustache' || child.type === 'Content' && child.text.trim() !== '') {
+                    explode(ErrorMessages.illegalSwitchContent(), child.line, child.column);
+                }
+            }
+        },
+        unknownBlockType: function (name, line, column) {
+            switch (name.trim()) {
                 case 'if':
                 case 'unless':
                 case 'switch':
@@ -125,6 +146,9 @@ var useHandler = function(error) {
                     explode(ErrorMessages.mustacheBlockTypeUnknown(name), line, column);
                     break;
             }
+        },
+        unknownIBlockType: function(iBlock, line, column) {
+            explode(ErrorMessages.iBlockUnknownType(iBlock), line, column);
         }
     };
 };
