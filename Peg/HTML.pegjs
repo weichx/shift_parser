@@ -4,21 +4,21 @@ openTag: HTMLTagOpen
 __
 children: (StartRule)
 __
-closeTag:HTMLTagClose
+closeTag:HTMLTagClose?
 __
 {
-    if (openTag.tag !== closeTag.tag) {
-        error(openTag.tag + " tag not closed");
-    }
+    Validators.ensureHTMLElementClosed(openTag, closeTag);
+    Validators.ensureIBlockNotChild(openTag.tag, children);
     return {
         type: 'HTMLElement',
         tag: openTag.tag,
+        line: openTag.line,
+        column: openTag.column,
         attributes: openTag.attributes.length !== 0 && openTag.attributes || null,
         closed: closeTag.tag == openTag.tag && true || false,
         children: children && children.length !== 0 && children || null
     };
 }
-
 
 HTMLOpenSymbol "HTMLOpenTag" = '<'
 HTMLCloseSymbol "HTMLCloseTag" = '</'
@@ -26,9 +26,12 @@ HTMLSelfCloseStart "HTMLSelfClosingTag" = "<"
 HTMLSelfCloseEnd "HTMLSelfClosingTagEnd" = "/>"
 
 HTMLTagOpen=
-    HTMLOpenSymbol !'/' tagName: HTMLTagName attrs: HTMLAttributes? !'/' ">" {
+    HTMLOpenSymbol !'/' tagName: HTMLTagName attrs: HTMLAttributes? !'/' closeSymbol: ">"? {
+    if(!closeSymbol) Validators.htmlOpenTagNotClosed(tagName, line(), column())
     return {
         tag: tagName,
+        line: line(),
+        column: column(),
         attributes: attrs
     }
 }
@@ -37,7 +40,9 @@ HTMLTagClose=
     __ HTMLCloseSymbol tagName: HTMLTagName ">" __{
     return {
         tag: tagName,
-        type: 'close'
+        type: 'close',
+        line: line(),
+        column: column()
     };
 }
 
@@ -47,7 +52,9 @@ HTMLSelfClose=
         tag: tagName,
         type: 'HTMLElementSelfClosed',
         closed: true,
-        attributes: attrs
+        attributes: attrs,
+        line: line(),
+        column: column()
     }
 }
 
@@ -76,14 +83,18 @@ MustacheHTMLAttribute
     return {
         value: value,
         formatters: value.formatters,
-        type: 'mustache'
+        type: 'mustache',
+        line: line(),
+        column: column()
     }
 }
 
 StringLiteralAttribute = value: StringLiteral {
     return {
         value: value,
-        type: 'string'
+        type: 'string',
+        line: line(),
+        column: column()
     }
 }
 
@@ -95,7 +106,9 @@ HTMLAttribute =
     return {
         attrName: attrName,
         attrValue : attrValue.value,
-        attrType: attrValue.type
+        attrType: attrValue.type,
+        line: line(),
+        column: column()
     }
 }
 

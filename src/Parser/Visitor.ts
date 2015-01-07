@@ -79,6 +79,7 @@ class Visitor {
         }
     }
 
+
     private visitMustacheVariable(variableName : string) {
         if(this.userDefinedVariables.indexOf(variableName) === -1) {
             this.userDefinedVariables.push(variableName);

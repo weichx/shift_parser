@@ -59,7 +59,7 @@ fs.readFile('template.shift', 'utf-8', function (error, string) {
 
 var visit = function (ast) {
 //    console.log('visit called', ast.type);
-    currentBlock.elementCount++; //todo this isnt right
+    currentBlock.elementCount++;
     switch (ast.type) {
         case 'tag':
             visitTagNode(ast);
@@ -141,13 +141,11 @@ var visitInnerText = function (input) {
 var visitBlockStart = function (blockName, blockheader, blockContent) {
     //console.log('visiting', input);
     closeElementDescriptor();
-    //todo this separator is likely not quite right, explore when building dom from structures
     currentBlock.htmlString += 'BLOCK' + blocks.length;
     blockStack.push(currentBlock);
     currentBlock = new Block();
     blocks.push(currentBlock);
     currentBlock.blockFunction = createBlockFunction(blockName, blockheader, blockContent);
-    //todo get block function
     openElementDescriptor();
 };
 
@@ -228,7 +226,6 @@ var openElementDescriptor = function () {
     currentElementDescriptor.index = currentBlock.elementCount;
 };
 
-//todo ensure block start name === block end name
 var isBlock = function (text) {
     return (text.trim().indexOf('{{#') === 0);
 };

@@ -1,1 +1,1 @@
-{{::default}}
+{{#switch z}} {{::case y}}  <div> {{::default}} </div> {{/switch}}

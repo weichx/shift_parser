@@ -54,8 +54,6 @@ literals found in variables are allowed as attributes but not as content. <div a
 literals in blocks are fine.
 
 
-Todo: think about adding a compute type. it starts with {{=>}} and contains code that copmiles into a function.
-the function is reinvoked when one if it's variables changes. It can have formatter chains. The return value is rendered as though it was a variable
 
 This is not a block but looks like this:
 

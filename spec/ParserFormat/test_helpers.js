@@ -14,7 +14,7 @@ var removeLineCol = function(str) {
 };
 
 var customMatchers = {
-    toThrowWithMessage: function(util, customeEqualityTesters) {
+    toThrowWithMessage: function(util, customEqualityTesters) {
         return {
             compare: function(actual, expected) {
                 if(expected === undefined) {
@@ -43,5 +43,6 @@ var customMatchers = {
 module.exports = {
     parser: parser,
     ErrorMessage: errorMessages,
-    customMatchers: customMatchers
+    customMatchers: customMatchers,
+    rebuiltParser: function() { return peg.buildParser(parserSrc) }
 };

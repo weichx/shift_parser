@@ -26,11 +26,12 @@ MustacheBlock "MustacheBlock" =
     return {
         type: 'MustacheBlock',
         tag: open.tag,
+        line: line(),
+        column: column(),
         headerContent: open.headerContent,
         computeContent: open.computeContent,
         children: children,
-        line: line(),
-        column: column()
+
     }
 }
 
@@ -40,10 +41,10 @@ MustacheBlockOpen =
     blockStack.pushBlock(header.tag);
     return {
         tag: header.tag,
+        line: line(),
+        column: column(),
         headerContent: header.headerContent,
         computeContent: header.computeContent,
-        line: line(),
-        column: column()
     }
 }
 
@@ -53,7 +54,8 @@ MustacheBlockClose =
     blockStack.popBlock();
     return {
         tag: header.tag,
-        attributes: 'add later'
+        line: line(),
+        column: column()
     }
 }
 
@@ -110,10 +112,10 @@ MustacheBlockIfOpen "IF BLOCK"
     Validators.validateBlockHeaderExpression('if', headerContent, line, column);
     return {
         tag: 'if',
-        headerContent: headerContent,
-        computeContent: computeHeader,
         line: line(),
-        column: column()
+        column: column(),
+        headerContent: headerContent,
+        computeContent: computeHeader
     };
 }
 / . { Validators.mustacheNotClosed('if', line, column) }
@@ -124,10 +126,10 @@ MustacheBlockUnlessOpen "UNLESS BLOCK"
     Validators.validateBlockHeaderExpression('unless', headerContent, line, column);
     return {
         tag: 'unless',
-        headerContent: headerContent,
-        computeContent: computeHeader,
         line: line(),
-        column: column()
+        column: column(),
+        headerContent: headerContent,
+        computeContent: computeHeader
     };
 }
 / . { Validators.mustacheNotClosed('unless', line, column) }
@@ -142,10 +144,10 @@ MustacheBlockForeachOpen "FOREACH BLOCK"
         tag: 'foreach',
         headerContent: {
             arrayName: arrayName,
-            formatters: formatters,
-            TemplateVariables: TemplateVariables,
             line: line(),
-            column: column()
+            column: column(),
+            formatters: formatters,
+            TemplateVariables: TemplateVariables
         },
     };
 }
@@ -156,10 +158,10 @@ MustacheBlockSwitchOpen "SWITCH BLOCK"
     Validators.validateBlockHeaderExpression('switch', headerContent, line, column);
     return {
         tag: 'switch',
-        headerContent: headerContent,
-        computeContent: computeContent,
         line: line(),
-        column: column()
+        column: column(),
+        headerContent: headerContent,
+        computeContent: computeContent
     };
 }
 
@@ -263,9 +265,9 @@ MustacheComment =
     return {
         type: 'Mustache',
         tag: 'comment',
-        comment: comment,
         line: line(),
-        column: column()
+        column: column(),
+        comment: comment
     };
 }
 
@@ -278,9 +280,9 @@ MustacheTemplateVariable =
         type: 'Mustache',
         tag: 'TemplateVariable',
         name: name,
-        formatters: formatters,
         line: line(),
-        column: column()
+        column: column(),
+        formatters: formatters
     }
 }
 
@@ -290,9 +292,9 @@ MustacheVariable =
         type: 'Mustache',
         tag: 'variable',
         name: name,
-        formatters: formatters,
         line: line(),
-        column: column()
+        column: column(),
+        formatters: formatters
     };
 }
 
@@ -304,9 +306,9 @@ MustacheInterface =
     return {
         type: 'Mustache',
         tag: 'interface',
-        content: content,
         line: line(),
-        column: column()
+        column: column(),
+        content: content
     }
 }
 
@@ -332,9 +334,9 @@ Content "Content" =
     &ContentCharacter ContentCharacter* {
         return {
             type: 'Content',
-            text: text(),
             line: line(),
-            column: column()
+            column: column(),
+            text: text()
         }
     }
 

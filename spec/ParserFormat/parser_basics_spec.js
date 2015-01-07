@@ -41,14 +41,14 @@ describe('PegParser', function () {
         var template = '<div';
         expect(function () {
             parser.parse(template)
-        }).toThrow(); //todo throw the right error
+        }).toThrowWithMessage(ErrorMessage.htmlOpenTagNotClosed('div'));
     });
 
     it('requires html tags to be have a matching close tag', function () {
         var template = '<div></span>';
         expect(function () {
             parser.parse(template)
-        }).toThrow(); //todo throw the right error
+        }).toThrowWithMessage(ErrorMessage.htmlTagMismatch('div', 'span'));
     });
 
     it('allows mustaches first', function () {

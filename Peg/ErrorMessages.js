@@ -35,6 +35,17 @@ var ErrorMessages = {
     },
     illegalSwitchContent: function() {
         return 'switch blocks cannot have content between their headers and their first ::case or ::default.';
+    },
+
+    /************************ HTML Errors *******************************/
+    htmlTagNotClosed: function(tag) {
+        return tag + ' element was not closed. Make sure it does not overlap a block.';
+    },
+    htmlTagMismatch: function(openTagName, closeTagName) {
+        return 'Tried to close tag type: <' + openTagName + '> but encountered: </' + closeTagName + '>.';
+    },
+    htmlOpenTagNotClosed: function(openTagName) {
+        return 'Tried to open tag type: <' + openTagName + '> but no closing \'>\' was found.';
     }
 };
 

@@ -6,6 +6,8 @@ var error = function () {
     throw new Error('Assign a real error thrower to this function');
 };
 
+var blockStack = null;
+
 esprima.parse = function () {
     try {
         esprimaparse.apply(esprimaparse, arguments);
@@ -16,31 +18,35 @@ esprima.parse = function () {
     }
 };
 
-var blockStack = new (function () {
-    this.blocks = [];
-    this.pushBlock = function (blockName) {
-        this.blocks.push({
-            blockType: blockName,
-            iBlockList: []
-        });
-    };
+var BlockStack = (function () {
+    function BlockStack() {
+        this.blocks = [];
+        this.pushBlock = function (blockName) {
+            this.blocks.push({
+                blockType: blockName,
+                iBlockList: []
+            });
+        };
 
-    this.popBlock = function () {
-        this.blocks.pop();
-    };
+        this.popBlock = function () {
+            this.blocks.pop();
+        };
 
-    this.topBlock = function () {
-        return this.blocks[this.blocks.length - 1];
-    };
+        this.topBlock = function () {
+            return this.blocks[this.blocks.length - 1];
+        };
 
-    this.pushIBlock = function (iBlockName) {
-        this.topBlock() && this.topBlock().iBlockList.push(iBlockName);
-    };
+        this.pushIBlock = function (iBlockName) {
+            this.topBlock() && this.topBlock().iBlockList.push(iBlockName);
+        };
 
-    this.getLastIBlock = function () {
-        var topBlock = this.blocks[this.blocks.length - 1];
-        return topBlock && topBlock.iBlockList[topBlock.iBlockList.length - 1];
-    };
+        this.getLastIBlock = function () {
+            var topBlock = this.blocks[this.blocks.length - 1];
+            return topBlock && topBlock.iBlockList[topBlock.iBlockList.length - 1];
+        };
+    }
+
+    return BlockStack;
 })();
 
 
@@ -147,8 +153,29 @@ var useHandler = function (error) {
                     break;
             }
         },
-        unknownIBlockType: function(iBlock, line, column) {
+        unknownIBlockType: function (iBlock, line, column) {
             explode(ErrorMessages.iBlockUnknownType(iBlock), line, column);
+        },
+
+        /************************ HTML ****************************/
+        ensureIBlockNotChild: function (htmlTagName, children) {
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                if (child.type === 'Mustache' && child.tag === 'intermediateBlock') {
+                    explode(ErrorMessages.iBlockNotAllowedHere(child.name, 'an html element (' + htmlTagName + ')'), child.line, child.column);
+                }
+            }
+        },
+        ensureHTMLElementClosed: function(openTag, closeTag) {
+            if(!closeTag) {
+                explode(ErrorMessages.htmlTagNotClosed(openTag.tag), openTag.line, openTag.column);
+            }
+            if(openTag.tag !== closeTag.tag) {
+                explode(ErrorMessages.htmlTagMismatch(openTag.tag, closeTag.tag), openTag.line, openTag.column);
+            }
+        },
+        htmlOpenTagNotClosed: function(openTagName, line, column) {
+            explode(ErrorMessages.htmlOpenTagNotClosed(openTagName), line, column);
         }
     };
 };
@@ -156,5 +183,8 @@ var useHandler = function (error) {
 module.exports = {
     useHandler: useHandler,
     esprima: esprima,
-    blockStack: blockStack
+    createBlockStack: function () {
+        blockStack = new BlockStack();
+        return blockStack;
+    }
 };
