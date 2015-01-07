@@ -112,6 +112,19 @@ var useHandler = function(error) {
             if(open.tag !== close.tag) {
                 explode(ErrorMessages.mustacheBlockNotClosed(open.tag, close.tag), line, column);
             }
+        },
+        unknownBlockType: function(name, line, column) {
+            switch(name.trim()) {
+                case 'if':
+                case 'unless':
+                case 'switch':
+                case 'foreach':
+                    explode(ErrorMessages.invalidBlockHeaderContent(name.trim()), line, column);
+                    break;
+                default :
+                    explode(ErrorMessages.mustacheBlockTypeUnknown(name), line, column);
+                    break;
+            }
         }
     };
 };

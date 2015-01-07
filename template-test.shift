@@ -1,1 +1,1 @@
-{{#if true}} {{ :: else }}  {{::elseif true}} {{/if}}
+{{#if s}} {{/zif}}

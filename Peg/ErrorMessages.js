@@ -16,13 +16,19 @@ var ErrorMessages = {
     },
     /************************ Block Errors *******************************/
     invalidBlockHeaderContent: function(blockType, content) {
-        return blockType + ' blocks must have a valid expression in their headers. Found: `' + content + '`';
+        var found = content && content.trim() !== '';
+        var str = '`' + blockType + '` blocks must have a valid expression in their headers. ';
+        if(found) str += 'Found: ' + content;
+        return  str;
     },
     unmatchedOpenOrCloseMustache: function(blockType) {
-        return blockType + ' block is missing a { or a }.'
+        return 'Unmatched { or } found inside `' + blockType + '` block header.';
     },
     mustacheBlockNotClosed: function(blockType, closedType) {
         return 'Encountered ' + closedType + ' block closing tag while expecting to close ' + blockType + ' block. Make sure you are not attempting to overlap mustache blocks.';
+    },
+    mustacheBlockTypeUnknown: function(blockType) {
+        return '`' + blockType + '` is not a valid block! Valid blocks are [if, unless, switch, and foreach]';
     }
 };
 
