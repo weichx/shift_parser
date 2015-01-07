@@ -57,31 +57,41 @@ Mustache "a Mustache tag"
     / MustacheVariable
 
 
-/*********************** Blocks ************************afdafdafdafa**********/
+/*********************** Blocks **********************************/
 MustacheBlockTypeOpen
+    = __ MustacheBlockTypeOpenValidate open: MustacheBlockTypeOpenConsume {
+    return open;
+}
+
+MustacheBlockTypeOpenConsume
     = __ MustacheBlockIf      Whitespace open: MustacheBlockIfOpen      { return open; }
     / __ MustacheBlockUnless  Whitespace open: MustacheBlockUnlessOpen  { return open; }
     / __ MustacheBlockForeach Whitespace open: MustacheBlockForeachOpen { return open; }
     / __ MustacheBlockSwitch  Whitespace open: MustacheBlockSwitchOpen  { return open; }
-    /  . { error('Expected a valid block type to be opened [if, unless, foreach, switch]. ' +
-                 'You may be missing whitespace after the block name, or blocks might be overlapping.' +
-                 'The block may also be empty, which is not allowed. Line: ' + line() + ' column: ' + column()); }
 
+//check for valid block names followed by whitespace without moving parse pointer
+MustacheBlockTypeOpenValidate
+    = &('if'i Whitespace)
+    / &('unless'i Whitespace)
+    / &('switch'i Whitespace)
+    / &('foreach'i Whitespace)
+    / invalidBlockName: NotWhiteSpaceOrCloseMustache
+{
+    Validators.unknownBlockType(text(), line, column);
+}
 
 MustacheBlockTypeClose
     = __ MustacheBlockIf      __ { return {tag:  'if'    }; }
     / __ MustacheBlockUnless  __ { return {tag: 'unless' }; }
     / __ MustacheBlockForeach __ { return {tag: 'foreach'}; }
     / __ MustacheBlockSwitch  __ { return {tag: 'switch' }; }
-    / . { expected('A valid block type to be closed [if, unless, foreach, switch]'); }
+    / invalidBlockType: NotWhiteSpaceOrCloseMustache
+{ Validators.unknownBlockType(text(), line, column); }
 
-//check for 'block name ' then consume it if its there
-MustacheBlockIf      = &('if'i)      'if'i
-MustacheBlockUnless  = &('unless'i)  'unless'i
-MustacheBlockForeach = &('foreach'i) 'foreach'i
-MustacheBlockSwitch  = &('switch'i)  'switch'i
-
-
+MustacheBlockIf      = 'if'i
+MustacheBlockUnless  = 'unless'i
+MustacheBlockForeach = 'foreach'i
+MustacheBlockSwitch  = 'switch'i
 
 MustacheBlockIfOpen "IF BLOCK"
    = computeHeader:GetComputeBlockHeader? headerContent: GetMustacheContent //get expression
@@ -94,7 +104,6 @@ MustacheBlockIfOpen "IF BLOCK"
     };
 }
 / . { Validators.mustacheNotClosed('if', line, column) }
-
 
 MustacheBlockUnlessOpen "UNLESS BLOCK"
     = computeHeader:GetComputeBlockHeader? headerContent: GetMustacheContent //get expression
@@ -135,8 +144,8 @@ MustacheBlockSwitchOpen "SWITCH BLOCK"
         headerContent: headerContent
     };
 }
-/***************** Intermediate Blocks **************************/
 
+/***************** Intermediate Blocks **************************/
 MustacheBlockIntermediate
     = MustacheIBlockElse
     / MustacheIBlockElseIf
@@ -295,6 +304,7 @@ ContentCharacter =
 MustacheOpenCharacters   "MustacheOpenCharacters"= "{{"
 MustacheCloseCharacters "MustacheCloseCharacters"= "}}"
 
+NotWhiteSpaceOrCloseMustache = ((![ /n/t] !'}}') .)*
 GetMustacheContent = (TraverseJS)*  EnsureNoOverflowBraces { return text(); }
 
 OpenObject = "{" TraverseJS* '}'
