@@ -77,7 +77,7 @@ MustacheBlockTypeOpenValidate
     / &('foreach'i Whitespace)
     / invalidBlockName: NotWhiteSpaceOrCloseMustache
 {
-    Validators.unknownBlockType(text(), line, column);
+    Validators.unknownBlockType(invalidBlockName, line, column);
 }
 
 MustacheBlockTypeClose
@@ -86,7 +86,9 @@ MustacheBlockTypeClose
     / __ MustacheBlockForeach __ { return {tag: 'foreach'}; }
     / __ MustacheBlockSwitch  __ { return {tag: 'switch' }; }
     / invalidBlockType: NotWhiteSpaceOrCloseMustache
-{ Validators.unknownBlockType(text(), line, column); }
+{
+    Validators.unknownBlockType(text(), line, column);
+}
 
 MustacheBlockIf      = 'if'i
 MustacheBlockUnless  = 'unless'i
@@ -304,7 +306,7 @@ ContentCharacter =
 MustacheOpenCharacters   "MustacheOpenCharacters"= "{{"
 MustacheCloseCharacters "MustacheCloseCharacters"= "}}"
 
-NotWhiteSpaceOrCloseMustache = ((![ /n/t] !'}}') .)*
+NotWhiteSpaceOrCloseMustache = ((!Whitespace !'}}') .)* { return text(); }
 GetMustacheContent = (TraverseJS)*  EnsureNoOverflowBraces { return text(); }
 
 OpenObject = "{" TraverseJS* '}'
