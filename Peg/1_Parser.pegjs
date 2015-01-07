@@ -219,6 +219,7 @@ MustacheIBlockCase =
     MustacheOpenCharacters __
     MustacheBlockIntermediateChar __
     "case"i __
+    computeExpression: GetComputeBlockHeader?
     expression: GetMustacheContent
     MustacheCloseCharacters
 {
@@ -227,6 +228,7 @@ MustacheIBlockCase =
     //see if esprima can verify that for us. 1 identifier, variable, or primitve
     Validators.ensureIBlockNotEmpty('case', expression, line, column);
     Validators.ensureLegalIBlockPlacement('case', line, column);
+ //todo   Validators.ensureNoComputeBlock('case', computeExpression, line, column);
     Validators.validateBlockHeaderExpression('case', expression, line, column);
     blockStack.pushIBlock('case');
 
@@ -314,9 +316,10 @@ MustacheInterface =
 
 /********************* MISC ******************************/
 
-ComputeBlockChar = __ "=>" __ //to be extended
+ComputeBlockChar = __ "=>" __
 
-GetComputeBlockHeader = __ ComputeBlockChar __ args: ComputeBlockArgs? {
+//todo this will need to do paren matching correctly
+GetComputeBlockHeader = __ ComputeBlockChar __  args: ComputeBlockArgs? {
     return args;
 }
 

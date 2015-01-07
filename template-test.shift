@@ -1,1 +1,1 @@
-{{#switch z}} {{::case y}}  <div> {{::default}} </div> {{/switch}}
+{{#switch z}} {{::case =>  x + 1}} {{/switch}}

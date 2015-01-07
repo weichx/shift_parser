@@ -36,7 +36,9 @@ var ErrorMessages = {
     illegalSwitchContent: function() {
         return 'switch blocks cannot have content between their headers and their first ::case or ::default.';
     },
-
+    computeBlockNotAllowedHere: function(blockName) {
+        return blockName + ' blocks cannot accept a compute block';
+    },
     /************************ HTML Errors *******************************/
     htmlTagNotClosed: function(tag) {
         return tag + ' element was not closed. Make sure it does not overlap a block.';

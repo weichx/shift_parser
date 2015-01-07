@@ -13,7 +13,7 @@ esprima.parse = function () {
         esprimaparse.apply(esprimaparse, arguments);
     } catch (e) {
         e.errorType = 'ESPRIMA JS ERROR';
-        e.fileLine = line();
+//        e.fileLine = line();
         throw e;
     }
 };
@@ -117,7 +117,11 @@ var useHandler = function (error) {
             if (content && content.trim() === '' || !content) {
                 explode(ErrorMessages.invalidBlockHeaderContent(blockType, content), line, column);
             } else {
-                esprima.parse(content);
+                try {
+                    esprima.parse(content);
+                } catch(e) {
+                    console.log(e)
+                }
             }
         },
         mustacheNotClosed: function (blockType, line, column) {
@@ -157,6 +161,9 @@ var useHandler = function (error) {
             explode(ErrorMessages.iBlockUnknownType(iBlock), line, column);
         },
 
+        invalidComputeBlockLocation: function(locationName, line, column) {
+            explode(ErrorMessages.computeBlockNotAllowedHere(locationName), line, column);
+        },
         /************************ HTML ****************************/
         ensureIBlockNotChild: function (htmlTagName, children) {
             for (var i = 0; i < children.length; i++) {
