@@ -3,10 +3,6 @@ var ErrorMessage = testHelper.ErrorMessage;
 var customMatchers = testHelper.customMatchers;
 var parser = testHelper.parser;
 
-beforeEach(function () {
-    jasmine.addMatchers(customMatchers);
-});
-
 describe('HTML children', function () {
     it('allows html to have children, starting with content', function () {
         var template = '<html>dont blow up{{stash}}</html>';

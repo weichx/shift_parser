@@ -7,7 +7,7 @@ beforeEach(function () {
 });
 
 describe('MustacheBlocks', function() {
-    it("does not allow an empty mustache block", function() {
+    it("does not allow an empty mustache header block", function() {
         var template = '{{#if}}{{/if}}';
         expect(function () {
             parser.parse(template)
@@ -67,7 +67,7 @@ describe('MustacheBlocks', function() {
         var template = '<div>{{#if true}}</div>';
         expect(function () {
             parser.parse(template)
-        }).toThrow();
+        }).toThrowWithMessage(ErrorMessage.htmlTagNotClosed('div'));
     });
 
     it('does not require whitespace in a mustache closing block', function() {
@@ -88,14 +88,14 @@ describe('MustacheBlocks', function() {
         var template = '<div>{{#if true}}</div>{{/  if  }}';
         expect(function () {
             parser.parse(template)
-        }).toThrow();
+        }).toThrowWithMessage(ErrorMessage.htmlTagNotClosed('div'));
     });
 
     it('does not allow unopened html tags inside a mustache block', function() {
         var template = '{{#if true}}</div>{{/  if  }}';
         expect(function () {
             parser.parse(template)
-        }).toThrow();
+        }).toThrow(); //todo not sure how to make catching unopened html tags show nicer errors
     });
 
     it('will allow all valid mustache block types', function() {
@@ -151,14 +151,14 @@ describe('MustacheBlocks', function() {
         var template = '{{#unless true}} {{#switch true }} {{/unless}} {{/switch}}';
         expect(function() {
             parser.parse(template);
-        }).toThrow();
+        }).toThrowWithMessage(ErrorMessage.mustacheBlockNotClosed('switch', 'unless'));
     });
 
     it('will not allow unopened blocks', function() {
         var template = '{{/if}}';
         expect(function() {
             parser.parse(template);
-        }).toThrow();
+        }).toThrow(); //todo unsure how to make unopened mustache blocks show a nicer error
     });
 
     describe('Generic Mustache', function () {
@@ -166,8 +166,7 @@ describe('MustacheBlocks', function() {
             var template = 'content {{[]}}';
             expect(function () {
                 parser.parse(template)
-            }).toThrow();
+            }).toThrow(); //todo better error for unknown variables
         });
-
     });
 });

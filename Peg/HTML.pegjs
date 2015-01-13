@@ -37,7 +37,8 @@ HTMLTagOpen=
 }
 
 HTMLTagClose=
-    __ HTMLCloseSymbol tagName: HTMLTagName ">" __{
+    __ HTMLCloseSymbol __ tagName: HTMLTagName __  attrs: (HTMLAttributes?) __ ">" __{
+    Validators.ensureHTMLCloseHasNoAttrs(attrs, tagName, line, column);
     return {
         tag: tagName,
         type: 'close',

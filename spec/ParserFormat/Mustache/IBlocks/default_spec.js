@@ -20,10 +20,9 @@ describe('default intermediate block', function () {
     });
 
     it('cannot be a child on the root block', function () {
-        var template = '';
-        var parser = testHelper.rebuiltParser();
+        var template = '{{::default}}';
         expect(function () {
-            parser.parse('{{::default}}');
+            parser.parse(template);
         }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('default', 'the template root'));
     });
 

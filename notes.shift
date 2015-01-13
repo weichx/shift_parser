@@ -14,18 +14,19 @@
 <div id="first">
     some text {{variable[i].property}} more text {{anotherVar}}
     <span id="otherElement">
-        <bold super="{{true}}">Dont replace</bold>
+        <bold super="{{someValue}}">Dont replace</bold>
         more text2 {{var}}
     </span>
 
     this is the pre block
-    {{#if somevar == true && 1 > 2}}
+    {{#if somevar == true && someValue > 2}}
         string! {{var | formatter0 | formatter1 }}
         {{#unless false}}
             other!
         {{/unless}}
 
         {{#foreach arrayName -> element:el index:i}}
+            //optimization if only child is a block with no sub blocks(if or unless without else or elseif), turn the block into a filter and apply it
             more content
             {{&element.name}}
         {{/foreach}}
@@ -54,13 +55,6 @@ literals found in variables are allowed as attributes but not as content. <div a
 literals in blocks are fine.
 
 
-
-This is not a block but looks like this:
-
-{{=>
-    var0 + var1 * var3 | currency(dollar)
-}}
-
 Blocks
     if/elseif/else
     forin -> key, value. maybe dont include this, will depend on how object key observation comes out.
@@ -79,7 +73,6 @@ Block generator -> generates blocks given an array. blocks are generated if in d
 Block content variables -> user variables within this block, observed to re-evaluate rendering this block
 Block variables -> variables that live on the block, not user code and not observed. ex. forloop index value
 BlockScope variables -> variables that are injected into this block from parent block
-
 
 
 Block needs to know: what variables it cares about, if any of these change, re run just the affected elements
@@ -119,29 +112,19 @@ myVar : string;
 myVar : Address
 
 }}
-{{#if => (myVar, someArray)
-var x = myVar -> currency === || myOther && something != !== + - * / [0-9] .
-x()
+{{#if => ($myVar, $someArray)
+
 }}
 
     {{#if myVar && yourVar && myVar > 10}}
         {{#if ::var && &var2 && &var3}}
 
-            //if option 1
-            only value types, arthitmetic operators & variables & literals: no indexing, no function calling
-            if option2
-            treat it as a compute block, inject stuff at the top, turn off observers, let you go wild
-
-            {{var}} {{/if }}  {{var}}
-
-        {{#if ! % ^ & * () - + | [] . < > = \ \''\"" , / ~ { } :
-
-optimize for rending speed and  convience
+optimize for rending speed
 
 <panel _id="panel" material="myMaterial">
     {{&myStreetName => (p) p.getAddress(); }}
 
-    {{&people, &constant => (people)
+    {{&people, $constant => (people)
         ArrayFilter.orderBy(name)
         [people, 'someConstant']
     }}
@@ -166,17 +149,11 @@ x()
 }}
 
     {{#if myVar && yourVar && myVar > 10}}
-        {{#if ::var && &var2 && &var3}}
-
-            //if option 1
-            only value types, arthitmetic operators & variables & literals: no indexing, no function calling
-            if option2
-            treat it as a compute block, inject stuff at the top, turn off observers, let you go wild
-
-            {{var}} {{/if }}  {{var}}
 
         optimize for rending speed >> convience
         user cannot define getters or setters for properties used in templates
+
+        {{@alias = var * &index}}
 
         <panel _id="panel" material="myMaterial">
             {{&myStreetName => (p) p.getAddress(); }}

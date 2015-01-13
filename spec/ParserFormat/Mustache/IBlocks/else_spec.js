@@ -88,10 +88,13 @@ describe('else intermediate block', function() {
     });
 
     it('cannot be overlapped by html', function() {
-        //todo implement
+        var template = '{{#if true}} <div> {{::else}} </div> {{/if}}';
+        expect(function() {
+            parser.parse(template);
+        }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('else', 'an html element (div)'));
     });
 
-    it('can take a compute block', function() {
-        //todo implement
+    it('cannot take a compute block', function() {
+        //todo implement after compute block arguments are working right
     });
 });

@@ -13,6 +13,14 @@ describe('comments', function() {
             parser.parse(template)
         }).not.toThrow();
     });
+
+    //todo allow unmatched mustaches in comments
+    //it('allows unmatched mustaches in comment', function() {
+    //    var template = '{{!comment {{}}} }{{}}{}}}';
+    //    expect(function () {
+    //        parser.parse(template)
+    //    }).not.toThrow();
+    //});
 });
 
 

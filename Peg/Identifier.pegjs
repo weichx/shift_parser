@@ -1,3 +1,5 @@
+/** Parts of this file are borrowed from the pegjs Javascript Grammar example*/
+
 IdentifierName "identifier"
     = first:IdentifierStart rest:IdentifierPart* {
     return first + rest.join("");
@@ -5,28 +7,28 @@ IdentifierName "identifier"
 
 IdentifierStart
     = UnicodeLetter
-/ "$"
-/ "_"
+    / "$"
+    / "_"
 
 IdentifierPart
     = IdentifierStart
-/ UnicodeCombiningMark
-/ UnicodeDigit
-/ UnicodeConnectorPunctuation
-/ "\u200C"
-/ "\u200D"
+    / UnicodeCombiningMark
+    / UnicodeDigit
+    / UnicodeConnectorPunctuation
+    / "\u200C"
+    / "\u200D"
 
 UnicodeLetter
     = Lu
-/ Ll
-/ Lt
-/ Lm
-/ Lo
-/ Nl
+    / Ll
+    / Lt
+    / Lm
+    / Lo
+    / Nl
 
 UnicodeCombiningMark
     = Mn
-/ Mc
+    / Mc
 
 UnicodeDigit
     = Nd

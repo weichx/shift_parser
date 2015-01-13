@@ -1,1 +1,5 @@
-{{#switch z}} {{::case =>  x + 1}} {{/switch}}
+{{#if variable}}
+
+<div> {{content}} </div>
+
+{{/if}}

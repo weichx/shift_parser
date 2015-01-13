@@ -164,6 +164,17 @@ var useHandler = function (error) {
         invalidComputeBlockLocation: function(locationName, line, column) {
             explode(ErrorMessages.computeBlockNotAllowedHere(locationName), line, column);
         },
+        validateForeachArray: function(array, line, column) {
+            //later, validate array literal
+            if(!array) {
+                explode(ErrorMessages.foreachRequiresArray(), line, column);
+            }
+        },
+        validateForeachRocket: function(rocket, line, column) {
+            if(!rocket) {
+                explode(ErrorMessages.foreachRequiresRocket(), line, column);
+            }
+        },
         /************************ HTML ****************************/
         ensureIBlockNotChild: function (htmlTagName, children) {
             for (var i = 0; i < children.length; i++) {
@@ -183,6 +194,17 @@ var useHandler = function (error) {
         },
         htmlOpenTagNotClosed: function(openTagName, line, column) {
             explode(ErrorMessages.htmlOpenTagNotClosed(openTagName), line, column);
+        },
+        ensureHTMLCloseHasNoAttrs: function(attrs, tagName, line, column) {
+            attrs && attrs.length !== 0 && explode(ErrorMessages.htmlCloseTagHasAttrs(tagName), line, column);
+        },
+        /*********************** Variables ************************/
+        validateVariableName: function(varName, line, column) {
+            if(!varName || varName.trim() === '') {
+                explode(ErrorMessages.whitespaceVariableName(), line, column);
+            } else {
+                //todo check for valid naming, check for array index and property dotting, also ensure no functions are called on the variable
+            }
         }
     };
 };

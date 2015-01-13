@@ -25,7 +25,7 @@ describe('Variable formatters', function () {
         var template = 'content {{variable | f(c d)}} <div></div>';
         expect(function () {
             parser.parse(template)
-        }).toThrow();
+        }).toThrow(); //todo make this a better error
     });
 
     it('allows a variable to have multiple formatters', function () {

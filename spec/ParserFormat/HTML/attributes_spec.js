@@ -3,10 +3,6 @@ var ErrorMessage = testHelper.ErrorMessage;
 var customMatchers = testHelper.customMatchers;
 var parser = testHelper.parser;
 
-beforeEach(function() {
-    jasmine.addMatchers(customMatchers);
-});
-
 describe('HTML attributes', function () {
     it('allows html open tags to have attributes', function () {
         var template = '<div id="someId"></div>';
@@ -16,17 +12,17 @@ describe('HTML attributes', function () {
     });
 
     it('does not allow html close tags to have attributes', function () {
-        var template = '<div></div id="someId>';
+        var template = '<div></div id="someId">';
         expect(function () {
             parser.parse(template)
-        }).toThrow();
+        }).toThrowWithMessage(ErrorMessage.htmlCloseTagHasAttrs());
     });
 
     it('requires attributes to be inside quotes', function () {
         var template = '<div id=someId></div>';
         expect(function () {
             parser.parse(template)
-        }).toThrow();
+        }).toThrow(); //todo unquoted attribute, one quoted attr (not opened or not closed)
         template = '<div id="someId"></div>';
         expect(function () {
             parser.parse(template)

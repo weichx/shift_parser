@@ -2,10 +2,6 @@ var testHelper = require('../../test_helpers');
 var parser = testHelper.parser;
 var ErrorMessage = testHelper.ErrorMessage;
 
-beforeEach(function () {
-    jasmine.addMatchers(testHelper.customMatchers);
-});
-
 describe('template variables', function() {
     it('allow template variable symbols', function () {
         var template = '{{&template}}';
@@ -21,8 +17,12 @@ describe('template variables', function() {
         }).not.toThrow();
     });
 
-    it('allows template variables to have a compute block', function() {
-
-    });
+    //todo reenable after fixing compute blocks
+    //it('allows template variables to have a compute block', function() {
+    //    var template = '{{&template => (x) 1 + 1 * Math.Pi}}';
+    //    expect(function () {
+    //        parser.parse(template)
+    //    }).not.toThrow();
+    //});
 
 });

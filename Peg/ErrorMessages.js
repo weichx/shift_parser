@@ -37,7 +37,13 @@ var ErrorMessages = {
         return 'switch blocks cannot have content between their headers and their first ::case or ::default.';
     },
     computeBlockNotAllowedHere: function(blockName) {
-        return blockName + ' blocks cannot accept a compute block';
+        return blockName + ' blocks cannot accept a compute block.';
+    },
+    foreachRequiresArray: function() {
+        return 'foreach blocks require an array literal or array reference as their second argument.';
+    },
+    foreachRequiresRocket: function() {
+        return 'foreach blocks require a >> symbole after the array and before the variables.';
     },
     /************************ HTML Errors *******************************/
     htmlTagNotClosed: function(tag) {
@@ -48,6 +54,13 @@ var ErrorMessages = {
     },
     htmlOpenTagNotClosed: function(openTagName) {
         return 'Tried to open tag type: <' + openTagName + '> but no closing \'>\' was found.';
+    },
+    htmlCloseTagHasAttrs: function() {
+        return 'HTML closing tags cannot accept attributes';
+    },
+    /************************ Variables ********************************/
+    whitespaceVariableName: function() {
+        return 'variables cannot have whitespace names';
     }
 };
 

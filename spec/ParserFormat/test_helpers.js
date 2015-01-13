@@ -43,6 +43,5 @@ var customMatchers = {
 module.exports = {
     parser: parser,
     ErrorMessage: errorMessages,
-    customMatchers: customMatchers,
-    rebuiltParser: function() { return peg.buildParser(parserSrc) }
+    customMatchers: customMatchers
 };

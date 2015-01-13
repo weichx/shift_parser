@@ -1,13 +1,13 @@
-
-//todo escape mustaches (maybe triple {)
 //todo formalize tags, types, constants, node return types
 //todo make sure line numbers are correct on everything sent back
 //todo throw the right error when a block is not closed (try the nested case)
 //todo better errors around variables not being right {{var x = 5}} etc
+//todo support var.property and var[i] and var[i].property
+
 StartProgram = program: StartRule { return program; }
 
 StartRule =
-    nodes: (HTMLTag / HTMLSelfClose / Mustache / Content)* {
+    nodes: (HTMLTag / HTMLSelfClose / EscapedMustache / Mustache / Content)* {
     return nodes;
 }
 
@@ -135,15 +135,17 @@ MustacheBlockUnlessOpen "UNLESS BLOCK"
 / . { Validators.mustacheNotClosed('unless', line, column) }
 
 MustacheBlockForeachOpen "FOREACH BLOCK"
-    = arrayName: IdentifierName
+    = array: IdentifierName?
       formatters: VariableFormatters?
-      __ '>>'
+      __ rocket: '>>'?
       TemplateVariables: (ForeachTemplateVariable)*
 {
+    Validators.validateForeachArray(array, line, column);
+    Validators.validateForeachRocket(rocket, line, column);
     return {
         tag: 'foreach',
         headerContent: {
-            arrayName: arrayName,
+            array: array,
             line: line(),
             column: column(),
             formatters: formatters,
@@ -289,7 +291,8 @@ MustacheTemplateVariable =
 }
 
 MustacheVariable =
-    MustacheOpenCharacters __ name: IdentifierName formatters: VariableFormatters  __ MustacheCloseCharacters{
+    MustacheOpenCharacters __ name: IdentifierName? formatters: VariableFormatters  __ MustacheCloseCharacters {
+    Validators.validateVariableName(name);
     return {
         type: 'Mustache',
         tag: 'variable',
@@ -353,6 +356,7 @@ MustacheOpenCharacters   "MustacheOpenCharacters"= "{{"
 MustacheCloseCharacters "MustacheCloseCharacters"= "}}"
 
 NotWhiteSpaceOrCloseMustache = ((!Whitespace !'}}') .)* { return text(); }
+NotWhiteSpaceOrCloseMustacheOrPipe = ((!Whitespace !'}}' !'|').)* { return text(); }
 GetMustacheContent = (TraverseJS)*  EnsureNoOverflowBraces { return text(); }
 
 OpenObject = "{" TraverseJS* '}'
@@ -369,6 +373,28 @@ MustacheComputeChar = '=>'
 MustacheCommentChar= "!"
 
 ForeachTemplateVariable
- = __ IdentifierName __ ':' __ IdentifierName __ {
+ = __ id1: IdentifierName? __ colon: ':'? __ id2: IdentifierName? __ ','? __ {
+    //if(!id1) {
+    //   error("missing id 1");
+    //}
+  //  Validator.foreachValidateArgument(id1);
+  //  Validator.foreachValidateArgument(id2);
+    if(!id2) {
+        error("missing identifier")
+    }
+   // Validators.validateForeachSecondIdentifier();
+    if(!colon) {
+        error('missing colon');
+    }
     return text().trim();
+}
+
+EscapedMustache "escaped Mustache" =
+    (__ '{{{' __ / __ '}}}' __) {
+    return {
+        type: 'Content',
+        line: line(),
+        column: column(),
+        text: text().slice(0, 1)
+    }
 }

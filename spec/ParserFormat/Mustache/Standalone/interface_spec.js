@@ -13,5 +13,5 @@ describe('interface declarations', function() {
         expect(function () {
             parser.parse(template)
         }).not.toThrow();
-    })
+    });
 });

@@ -76,7 +76,7 @@ describe('PegParser', function () {
         var template = '<div>';
         expect(function () {
             parser.parse(template)
-        }).toThrow();
+        }).toThrowWithMessage(ErrorMessage.htmlTagNotClosed('div'));
     });
 
     it('requires mustaches to be closed', function () {

@@ -1,4 +1,4 @@
-/* ----- 7. Strings ----- */
+/** Parts of this file are borrowed from the pegjs Javascript Grammar example*/
 SourceCharacter
     = .
 
