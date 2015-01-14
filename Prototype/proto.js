@@ -260,6 +260,11 @@ var Observer = (function () {
     return Observer;
 })();
 
+//blocks know what they care about, subscribe to those properties
+//up to block to render / not render self
+
+
+
 var ChainLink = function () {
     this.children = [];
     this.valueToSet = null;
@@ -304,9 +309,52 @@ ChainLink.prototype.traverse = function () {
 
     this.currentValue = value; //store value for next change
     this.valueToSet = null; //release reference so it can possibly be collected
-    this.template.set(this.templatePropertyPath, value); //reflect change back to template
+    worker.postMessage({
+        messageType: WorkerMessageType.Chain,
+        templateId: this.template.id,
+        property: this.templatePropertyPath
+    });
+    //this.template.set(this.templatePropertyPath, value); //reflect change back to template
 };
 
+//having a concept of a 'work queue' that has given 'load' (time between ticks?) it would really cool to have abstraction
+//that would delegate work to a worker or the main thread depending on load, aggregate their events into one interface
+//and major profit. This could even work for computing 'should I render' for each block, if we lift any inline function
+//calls from if / elseif / unless headers into variables and compute them before the worker starts, we can transfer their
+//values to the workers, and update them on change. Will need to profile sending / receiving LOTS of little messages to
+//and from workers. The upside is that the algorithms are pretty much the same for computing something on the UI thread
+//vs the worker thread, so if a platform doesn't support webworkers we aren't sunk.
+
+//it might be possible to offload a lot of work to a web worker.
+//figuring out which elements / attributes are dirty on a per block basis
+//figuring out style changes that need to happen to scope css
+//animation curve crunching
+//image compression / decompression
+//ajax
+
+function Worker() {
+    this.onmessage = function(message) {
+        switch(message.messageType) {
+            case WorkerMessageType.Chain:
+                var blocks = this.blocks[message.templateId];
+                var blocksForProp = blocks[message.property];
+                //template
+                    //propertyNames
+                        //blocks
+                            //elements
+                            //attributes
+                //removing a block:
+                    //for each property block cares about
+                        //delete template[propertyName][blockId]
+                //adding a block:
+                    //foreach property block cares about
+                        //template[propertyName][blockId] = {
+                        //          elements: [index], attributes: [index]
+                        //}
+                break;
+        }
+    }
+}
 //last sink value still has chain fns called on it
 bathroom.sink = new Sink();
 //chain is incorrectly subscribed to sink.full since bathroom.sink is pointing a different instance than chain.bathroom_sink
@@ -326,10 +374,22 @@ var Sweep = function () {
     //templateSweepQueue.forEach(sweep);
     //observedArraySweep -> add chains, reset growth count to 0
 };
+
+
 //maybe shallow copy arrays in templates so template sorting doesn't fire off shit tons of observers
 var TemplateArray = function () {
     this.push = function (items) {
         //at sweep phase, grow chains if needed  them and set values
+    };
+
+    this.get = function() {
+
+    };
+
+    this.set = function() {
+        if(this.length !== base.length) {
+
+        }
     };
 
     this.grew = function () {
@@ -396,3 +456,4 @@ TemplateInterface.prototype.set = function (propertyName, value) {
     this[propertyName] = value;
     this.changes.push(propertyName);
 };
+

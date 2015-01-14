@@ -129,7 +129,9 @@ optimize for rending speed
         [people, 'someConstant']
     }}
 
-    {{#foreach people | reverse | orderBy('name') >> person:p index:i, address:&p.address}}
+    {{#foreach people | reverse | orderBy(name, address.streetName) >> person:p index:i, address:&p.address}}
+        {{@address = p.address}}
+        {{&& address.streetName}}
         <panelItem displayinfo="{{&p.name}}" material="{{=> (&p, houseColors) houseColors.get(p.address)}}"/>
         <super-custom-element>
 
@@ -142,13 +144,17 @@ optimize for rending speed
 
     foreach (arrayName | blockVariableOfTypeArray | array literal) | filter | filter >> variable declarations
 
+    basearray displayArray orderBy
+    when an element changes, if the change was affected by orderBy, recompute the orderBy only for that element. change it's index or remove if needed
+    when an element is added, compute orderBy for that element, insert at computed index if needed.
+    when an element is removed, just remove it.
 
 {{#if => (myVar, someArray)
 var x = myVar -> currency === || myOther && something != !== + - * / [0-9] .
 x()
 }}
 
-    {{#if myVar && yourVar && myVar > 10}}
+    {{#if array[0].someProperty.contains(fn) && yourVar && myVar > 10}}
 
         optimize for rending speed >> convience
         user cannot define getters or setters for properties used in templates
