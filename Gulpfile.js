@@ -62,3 +62,12 @@ gulp.task('testpeg', ['compilePeg'], function() {
     return gulp.src(['spec/ParserFormat/**/*_spec.js']).pipe(jasmine({includeStackTrace: true}));
 });
 
+gulp.task('compile_thread', function() {
+    gulp.src('Thread/**/*.ts')
+        .pipe(typescript({
+            target: 'ES5',
+            declaration: true,
+            sourcemap: true
+        }))
+        .pipe(gulp.dest('thread_build/'));
+});

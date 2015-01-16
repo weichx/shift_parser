@@ -107,48 +107,7 @@ var Bathroom = (function () {
 //path created at template compile time: ['hotel', 'bathroom', 'sink', ['capacity', 'full']]
 //a single chain handles as many properties as possible
 
-//created on template interface prototypes? created at compile time?
-var Chain_SomeId = function (path) {
-    path.forEach(function (pathSegment, i) {
-        if (Array.isArray(pathSegment)) {
-            pathSegment.forEach(function (segment) {
-                //do the same as in the else, probably recurse since we need to handle forks within forks
-            });
-        } else {
-            //if not precompiled, define property here
-            this.hotel_bathroom_sink = null;
-            //called when globalSweeQueue.sweep is called
-            //need to update chains if a mid chain property changed
-            //we want to update at the end, which means that chainFn may be called where it shouldn't
-            var chainFn = function (_this, propertyValue) {
-                var level = i;
-                var property = pathSegment; //path so far, ie hotel_bathroom_sink
-                //_this.hotel_bathroom.updateChildChains('sink', _this);
 
-                //set the local property reference
-                //if precompiled or use a generated fn:
-                _this.hotel_bathroom_sink = propertyValue;
-                //otherwise:
-                _this[property] = propertyValue;
-                //mark that it changed if something higher up on the chain hasn't already been changed
-                //if something higher has been changed, this is invalidated
-                if (_this.changeLevel <= level) {
-                    _this.changeLevel = level;
-                    _this.changes.push('hotel_bathroom_sink' /*property*/);
-                }
-            };
-        }
-    });
-};
-
-var chainFn = function (_this, propertyValue) {
-    var level = i;
-    var property = pathSegment; //path so far, ie hotel_bathroom_sink
-    if (_this.changeLevel <= level) {
-        _this.changeLevel = level;
-        _this.changes.insert(pathSegment);
-    }
-};
 
 var chainSweep = function () {
     //grab first (lowest change index) items from changes array (can be many at the same level, ie siblings)
@@ -169,34 +128,6 @@ var chainSweep = function () {
 };
 
 
-var Chain = function () {
-
-};
-
-var Types = {
-    Null: 0,
-    Primitive: 1,
-    Function: 2,
-    Object: 3
-};
-
-var typeMap = {
-    object: Types.Object,
-    'function': Types.Object,
-    number: Types.Primitive,
-    boolean: Types.Primitive,
-    string: Types.Primitive,
-    'undefined': Types.Null
-};
-
-var getType = function (itemToCheck) {
-    var type = typeof itemToCheck;
-    if (type === 'object' && !itemToCheck) {
-        return Types.Null;
-    } else {
-        return typeMap[type];
-    }
-};
 
 var Observer = (function () {
     function Observer() {
@@ -264,7 +195,6 @@ var Observer = (function () {
 //up to block to render / not render self
 
 
-
 var ChainLink = function () {
     this.children = [];
     this.valueToSet = null;
@@ -286,6 +216,13 @@ ChainLink.prototype.chainFn = function (newPropertyValue) {
     this.valueToSet = newPropertyValue;
 };
 
+//ONLY NEED VALUES OF TERMINAL NODES PER TEMPLATE
+//if this is a non terminal chain and value is null or primitive -> tell children to remove. set end value to null
+//if this is a terminal node and type is object -> JSON.stringify it, compare that to previous stringified json value
+//if this ia a terminal node and type is function -> toString() it, compare that to previous toString() value (or do nothing at all like angular)
+
+//two types of chains objects: terminal and non terminal
+
 ChainLink.prototype.traverse = function () {
     var value = this.valueToSet;
     var type = typeof value;
@@ -293,6 +230,11 @@ ChainLink.prototype.traverse = function () {
     if (this.shouldRemoveListeners) {
         this.currentValue.removeChain(this, this.propertyName);
         this.shouldRemoveListeners = false;
+    }
+    if (!value || typeof value === 'primitive') {
+        //children.remove();
+    } else {
+        //children.add();
     }
     //if this.shouldRemoveListeners == false and typeof new value is null or primitive, we can probably skip traversal
     //of the children since we know they wont be getting a new value.
@@ -316,6 +258,108 @@ ChainLink.prototype.traverse = function () {
     });
     //this.template.set(this.templatePropertyPath, value); //reflect change back to template
 };
+function TerminalChainLink() {
+
+}
+
+TerminalChainLink.prototype.traverse = function () {
+    var value = this.valueToSet;
+    var uploadValue = null;
+    var type = typeof value;
+    if (value && type === 'object') {
+        uploadValue = JSON.stringify(value);
+    } else if (type === 'function') {
+        uploadValue = value.toString();
+    } else {
+        uploadValue = value;
+    }
+    if (uploadValue == this.currentValue) return;
+    this.currentValue = uploadValue;
+    worker.postMessage({
+        key: this.templatePropertyPath,
+        value: uploadValue
+    });
+};
+//   self  child
+//template.obj.fn.goo
+function NonTerminalChainLink() {}
+
+NonTerminalChainLink.prototype.traverse = function() {
+    if(this.lastUpdateFrame === Shift.currentFrame) return;
+    this.lastUpdateFrame = Shift.currentFrame;
+    var value = this.valueToSet;
+    var type = typeof value;
+    if(type && type === 'object' || type === 'function') {
+        if(!value.__observers) observify(value, this.propertyName);
+        for(var i = 0; i < this.children.length; i++) {
+            this.children[i].traverse();
+        }
+    } else {
+        for(i = 0; i < this.children.length; i++) {
+            this.children[i].clear();
+        }
+    }
+};
+
+NonTerminalChainLink.prototype.changed = function (value) {
+    this.template.propertyChanged(this.propertyName, this.level);
+};
+
+var Template = function() {
+    this.properties = {};
+};
+
+Template.prototype.propertyChanged = function(property, level) {
+    var propStructure = this.properties[property];
+    if(propStructure.level === -1) {
+        templateSweepQueue.push(this);
+        //since we know we changed set level to terminal, will likely be overwritten later but this sets it to a non -1 value
+        propStructure.level = propStructure.chains.length;
+    }
+    if(level < propStructure.level) {
+        propStructure.level = level;
+    }
+};
+
+//below, the two properties share chain refs for airplane and pilot but have different chain refs for wife.
+//airplane.pilot.wife
+//airplane.pilot.wife.name
+var templatePropertyChange = {
+    level: -1,                      //denotes which index in the chains array to start at
+    chains: [chain, chain, chain]   //array of chain references that when walked, comprise this property chain.
+};
+
+var notifyTemplateChange = function() {
+    this.template.propertyChanged(this.propertyName, this.level);
+};
+//todo implement array methods for much speed increase. Where possible use array indices to map to things instead of
+//string identifiers. This a 'do it later' feature.
+
+var SomeObject = function() {
+    this.__properties = {};
+    this.__propertyChanges = {};
+    this.setX = function(value) {
+        if(!this.inSweep) sweepQueue.push(this);
+        this.__properties['x'] = value;
+        this.__propertyChanges['x'] = true;
+    };
+
+    this.sweep = function() {
+        var keys = Object.keys(this.__propertyChanges);
+        for(var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            if(this.__propertyChanges[key]) {
+                this.__propertyChanges[key] = false;
+                var chains = this.__chains[key];
+                var value = this.__properties[key];
+                for(var j = 0; j < chains.length; j++) {
+                    chains[i].changed(value);
+                }
+            }
+        }
+    }
+};
+
 
 //having a concept of a 'work queue' that has given 'load' (time between ticks?) it would really cool to have abstraction
 //that would delegate work to a worker or the main thread depending on load, aggregate their events into one interface
@@ -333,28 +377,30 @@ ChainLink.prototype.traverse = function () {
 //ajax
 
 function Worker() {
-    this.onmessage = function(message) {
-        switch(message.messageType) {
+    this.onmessage = function (message) {
+        switch (message.messageType) {
             case WorkerMessageType.Chain:
                 var blocks = this.blocks[message.templateId];
                 var blocksForProp = blocks[message.property];
                 //template
-                    //propertyNames
-                        //blocks
-                            //elements
-                            //attributes
+                //propertyNames
+                //blocks
+                //elements
+                //attributes
                 //removing a block:
-                    //for each property block cares about
-                        //delete template[propertyName][blockId]
+                //for each property block cares about
+                //delete template[propertyName][blockId]
                 //adding a block:
-                    //foreach property block cares about
-                        //template[propertyName][blockId] = {
-                        //          elements: [index], attributes: [index]
-                        //}
+                //foreach property block cares about
+                //template[propertyName][blockId] = {
+                //          elements: [index], attributes: [index]
+                //}
                 break;
         }
     }
 }
+
+
 //last sink value still has chain fns called on it
 bathroom.sink = new Sink();
 //chain is incorrectly subscribed to sink.full since bathroom.sink is pointing a different instance than chain.bathroom_sink
@@ -382,12 +428,12 @@ var TemplateArray = function () {
         //at sweep phase, grow chains if needed  them and set values
     };
 
-    this.get = function() {
+    this.get = function () {
 
     };
 
-    this.set = function() {
-        if(this.length !== base.length) {
+    this.set = function () {
+        if (this.length !== base.length) {
 
         }
     };
@@ -441,13 +487,13 @@ var TemplateInterface = function () {
     this.alteredBlocks = [];
 };
 
-TemplateInterface.prototype.eval = function() {
+TemplateInterface.prototype.eval = function () {
     //blocks, attributes
     //sort changed blocks so parent blocks are evaluated before child blocks
-    this.alteredBlocks.sort(function(a, b) {
+    this.alteredBlocks.sort(function (a, b) {
         return a.level > b.level;
     });
-    this.alteredBlocks.forEach(function(block) {
+    this.alteredBlocks.forEach(function (block) {
         block.evaluateForRendering();
     });
 };
@@ -456,4 +502,3 @@ TemplateInterface.prototype.set = function (propertyName, value) {
     this[propertyName] = value;
     this.changes.push(propertyName);
 };
-
