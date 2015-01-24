@@ -33,7 +33,7 @@ describe('elseif intermediate block', function() {
     })
     
     it('cannot be a child of foreach', function() {
-        var template = '{{#foreach array >> index:i}} {{::elseif 11}} {{/foreach}}';
+        var template = '{{#foreach item in array}} {{::elseif 11}} {{/foreach}}';
         expect(function() {
             parser.parse(template);
         }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('elseif', 'foreach'));

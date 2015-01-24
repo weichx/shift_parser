@@ -48,7 +48,7 @@ describe('default intermediate block', function () {
     });
 
     it('should not be allowed in foreach blocks', function () {
-        var template = '{{#foreach z >> index:i}} {{::default }} {{/foreach}}';
+        var template = '{{#foreach z in array}} {{::default }} {{/foreach}}';
         expect(function () {
             parser.parse(template);
         }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('default', 'foreach'));

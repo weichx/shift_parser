@@ -45,7 +45,7 @@ describe('else intermediate block', function() {
         expect(function () {
             parser.parse(template)
         }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('else', 'switch'));
-        template = '{{#foreach array >> index:i}} {{::else}} {{/foreach}}';
+        template = '{{#foreach item in array}} {{::else}} {{/foreach}}';
         expect(function () {
             parser.parse(template)
         }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('else', 'foreach'));

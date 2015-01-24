@@ -99,7 +99,7 @@ describe('MustacheBlocks', function() {
     });
 
     it('will allow all valid mustache block types', function() {
-        var template = '{{#if true}} {{/if}} {{#unless true}} {{/unless}} {{#switch true}}{{/switch}} {{#foreach array >> index:i}}{{/foreach}}';
+        var template = '{{#if true}} {{/if}} {{#unless true}} {{/unless}} {{#switch true}}{{/switch}} {{#foreach item in array}}{{/foreach}}';
         expect(function () {
             parser.parse(template)
         }).not.toThrow();

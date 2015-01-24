@@ -1,24 +1,12 @@
-//todo formalize tags, types, constants, node return types
-//todo make sure line numbers are correct on everything sent back
-//todo throw the right error when a block is not closed (try the nested case)
-//todo better errors around variables not being right {{var x = 5}} etc
-//todo support var.property and var[i] and var[i].property
-
-StartProgram = program: StartRule { return program; }
-
-StartRule =
-    nodes: (HTMLTag / HTMLSelfClose / EscapedMustache / Mustache / Content)* {
-    return nodes;
-}
 
 MustacheBlock "MustacheBlock" =
     __
-    open: MustacheBlockOpen
-    __
-    children: StartRule
-    __
-    close: MustacheBlockClose
-    __
+open: MustacheBlockOpen
+__
+children: StartRule
+__
+close: MustacheBlockClose
+__
 {
     Validators.ensureMustacheBlockClosed(open, close, line, column);
     open.tag === 'switch' && Validators.ensureLegalSwitchChildren(children, open.line, open.column);
@@ -30,8 +18,7 @@ MustacheBlock "MustacheBlock" =
         column: column(),
         headerContent: open.headerContent,
         computeContent: open.computeContent,
-        children: children,
-
+        children: children
     }
 }
 
@@ -61,11 +48,11 @@ MustacheBlockClose =
 
 Mustache "a Mustache tag"
     = MustacheBlock
-    / MustacheBlockIntermediate
-    / MustacheTemplateVariable
-    / MustacheComment
-    / MustacheInterface
-    / MustacheVariable
+/ MustacheBlockIntermediate
+/ MustacheTemplateVariable
+/ MustacheComment
+/ MustacheInterface
+/ MustacheVariable
 
 
 /*********************** Blocks **********************************/
@@ -76,27 +63,27 @@ MustacheBlockTypeOpen
 
 MustacheBlockTypeOpenConsume
     = __ MustacheBlockIf      Whitespace open: MustacheBlockIfOpen      { return open; }
-    / __ MustacheBlockUnless  Whitespace open: MustacheBlockUnlessOpen  { return open; }
-    / __ MustacheBlockForeach Whitespace open: MustacheBlockForeachOpen { return open; }
-    / __ MustacheBlockSwitch  Whitespace open: MustacheBlockSwitchOpen  { return open; }
+/ __ MustacheBlockUnless  Whitespace open: MustacheBlockUnlessOpen  { return open; }
+/ __ MustacheBlockForeach Whitespace open: MustacheBlockForeachOpen { return open; }
+/ __ MustacheBlockSwitch  Whitespace open: MustacheBlockSwitchOpen  { return open; }
 
 //check for valid block names followed by whitespace without moving parse pointer
 MustacheBlockTypeOpenValidate
     = &('if'i Whitespace)
-    / &('unless'i Whitespace)
-    / &('switch'i Whitespace)
-    / &('foreach'i Whitespace)
-    / invalidBlockName: NotWhiteSpaceOrCloseMustache
+/ &('unless'i Whitespace)
+/ &('switch'i Whitespace)
+/ &('foreach'i Whitespace)
+/ invalidBlockName: NotWhiteSpaceOrCloseMustache
 {
     Validators.unknownBlockType(invalidBlockName, line, column);
 }
 
 MustacheBlockTypeClose
     = __ MustacheBlockIf      __ { return {tag: 'if'     }; }
-    / __ MustacheBlockUnless  __ { return {tag: 'unless' }; }
-    / __ MustacheBlockForeach __ { return {tag: 'foreach'}; }
-    / __ MustacheBlockSwitch  __ { return {tag: 'switch' }; }
-    / invalidBlockType: NotWhiteSpaceOrCloseMustache
+/ __ MustacheBlockUnless  __ { return {tag: 'unless' }; }
+/ __ MustacheBlockForeach __ { return {tag: 'foreach'}; }
+/ __ MustacheBlockSwitch  __ { return {tag: 'switch' }; }
+/ invalidBlockType: NotWhiteSpaceOrCloseMustache
 {
     Validators.unknownBlockType(text(), line, column);
 }
@@ -107,7 +94,7 @@ MustacheBlockForeach = 'foreach'i
 MustacheBlockSwitch  = 'switch'i
 
 MustacheBlockIfOpen "IF BLOCK"
-   = computeHeader:GetComputeBlockHeader? headerContent: GetMustacheContent //get expression
+    = computeHeader:GetComputeBlockHeader? headerContent: GetMustacheContent //get expression
 {
     Validators.validateBlockHeaderExpression('if', headerContent, line, column);
     return {
@@ -134,25 +121,25 @@ MustacheBlockUnlessOpen "UNLESS BLOCK"
 }
 / . { Validators.mustacheNotClosed('unless', line, column) }
 
+T = IdentifierName RequiredWhitespace
+
 MustacheBlockForeachOpen "FOREACH BLOCK"
-    = array: IdentifierName?
-      formatters: VariableFormatters?
-      __ rocket: '>>'?
-      TemplateVariables: (ForeachTemplateVariable)*
+    = headerContent: GetMustacheContent
 {
-    Validators.validateForeachArray(array, line, column);
-    Validators.validateForeachRocket(rocket, line, column);
+    var split = headerContent.match(/\S+/g);
+    Validators.validateForeachFormat(split);
+    var variable = split[0];
+    var array = split[2];
     return {
         tag: 'foreach',
         headerContent: {
+            variable: variable,
             array: array,
             line: line(),
-            column: column(),
-            formatters: formatters,
-            TemplateVariables: TemplateVariables
+            column: column()
         },
     };
-}
+}/ . { Validators.mustacheNotClosed('foreach', line, column) }
 
 MustacheBlockSwitchOpen "SWITCH BLOCK"
     = computeContent: GetComputeBlockHeader? headerContent: GetMustacheContent
@@ -170,37 +157,37 @@ MustacheBlockSwitchOpen "SWITCH BLOCK"
 /***************** Intermediate Blocks **************************/
 MustacheBlockIntermediate
     = MustacheIBlockElse
-    / MustacheIBlockElseIf
-    / MustacheIBlockCase
-    / MustacheIBlockDefault
-    / '{{' __ '::' NotWhiteSpaceOrCloseMustache { Validators.unknownIBlockType(text(), line, column); }
-    / '{{' __ ':'  NotWhiteSpaceOrCloseMustache { Validators.unknownIBlockType(text(), line, column); }
+/ MustacheIBlockElseIf
+/ MustacheIBlockCase
+/ MustacheIBlockDefault
+/ '{{' __ '::' NotWhiteSpaceOrCloseMustache { Validators.unknownIBlockType(text(), line, column); }
+/ '{{' __ ':'  NotWhiteSpaceOrCloseMustache { Validators.unknownIBlockType(text(), line, column); }
 
 MustacheIBlockElse =
     MustacheOpenCharacters __
-    MustacheBlockIntermediateChar __
-    !"elseif"i "else"i __
-    expression: GetMustacheContent?
+MustacheBlockIntermediateChar __
+!"elseif"i "else"i __
+expression: GetMustacheContent?
     MustacheCloseCharacters
-{
-    Validators.ensureIBlockEmpty('else', expression, line, column);
-    Validators.ensureLegalIBlockPlacement('else', line, column);
-    blockStack.pushIBlock('else');
-    return {
-        type: 'Mustache',
-        tag: 'intermediateBlock',
-        name: 'else',
-        line: line(),
-        column: column()
-    }
+    {
+        Validators.ensureIBlockEmpty('else', expression, line, column);
+Validators.ensureLegalIBlockPlacement('else', line, column);
+blockStack.pushIBlock('else');
+return {
+    type: 'Mustache',
+    tag: 'intermediateBlock',
+    name: 'else',
+    line: line(),
+    column: column()
+}
 }
 
 MustacheIBlockElseIf =
     MustacheOpenCharacters __
-    MustacheBlockIntermediateChar __
-    "elseif"i __
-    expression: GetMustacheContent
-    MustacheCloseCharacters
+MustacheBlockIntermediateChar __
+"elseif"i __
+expression: GetMustacheContent
+MustacheCloseCharacters
 {
     Validators.ensureIBlockNotEmpty('elseif', expression, line, column);
     Validators.ensureLegalIBlockPlacement('elseif', line, column);
@@ -219,18 +206,18 @@ MustacheIBlockElseIf =
 
 MustacheIBlockCase =
     MustacheOpenCharacters __
-    MustacheBlockIntermediateChar __
-    "case"i __
-    computeExpression: GetComputeBlockHeader?
+MustacheBlockIntermediateChar __
+"case"i __
+computeExpression: GetComputeBlockHeader?
     expression: GetMustacheContent
-    MustacheCloseCharacters
+MustacheCloseCharacters
 {
     //todo case statements should be constant. explore the implementation of switch, maybe precompile into
     //js switch statement, maybe treat like dynamic if ladder
     //see if esprima can verify that for us. 1 identifier, variable, or primitve
     Validators.ensureIBlockNotEmpty('case', expression, line, column);
     Validators.ensureLegalIBlockPlacement('case', line, column);
- //todo   Validators.ensureNoComputeBlock('case', computeExpression, line, column);
+    //todo   Validators.ensureNoComputeBlock('case', computeExpression, line, column);
     Validators.validateBlockHeaderExpression('case', expression, line, column);
     blockStack.pushIBlock('case');
 
@@ -246,22 +233,22 @@ MustacheIBlockCase =
 
 MustacheIBlockDefault =
     MustacheOpenCharacters __
-    MustacheBlockIntermediateChar __
-    "default"i __
-    expression: GetMustacheContent?
+MustacheBlockIntermediateChar __
+"default"i __
+expression: GetMustacheContent?
     MustacheCloseCharacters
-{
-    Validators.ensureIBlockEmpty('default', expression, line, column);
-    Validators.ensureLegalIBlockPlacement('default', line, column);
-    blockStack.pushIBlock('default');
+    {
+        Validators.ensureIBlockEmpty('default', expression, line, column);
+Validators.ensureLegalIBlockPlacement('default', line, column);
+blockStack.pushIBlock('default');
 
-    return {
-        type: 'Mustache',
-        tag: 'intermediateBlock',
-        name: 'default',
-        line: line(),
-        column: column()
-    }
+return {
+    type: 'Mustache',
+    tag: 'intermediateBlock',
+    name: 'default',
+    line: line(),
+    column: column()
+}
 }
 /**************** Standalone Nodes **************************/
 MustacheComment =
@@ -277,8 +264,8 @@ MustacheComment =
 
 MustacheTemplateVariable =
     MustacheOpenCharacters __ "&"
-    name: IdentifierName __
-    formatters: VariableFormatters?
+name: IdentifierName __
+formatters: VariableFormatters?
     MustacheCloseCharacters {
     return {
         type: 'Mustache',
@@ -305,9 +292,9 @@ MustacheVariable =
 
 MustacheInterface =
     MustacheOpenCharacters __
-    MustacheInterfaceChar __
-    content: GetMustacheContent
-    MustacheCloseCharacters {
+MustacheInterfaceChar __
+content: GetMustacheContent
+MustacheCloseCharacters {
     return {
         type: 'Mustache',
         tag: 'interface',
@@ -334,27 +321,9 @@ ComputeBlockArgs =
 ComputeBlockRestArgs=
     __ ',' __ '&'?IdentifierName __
 
-Content "Content" =
-    //and checks for existence without moving the poitner, allowing us to star content grabbing.
-    //without and, if content is in a * block and returns false, we hit an infinite loop
-    &ContentCharacter ContentCharacter* {
-        return {
-            type: 'Content',
-            line: line(),
-            column: column(),
-            text: text()
-        }
-    }
-
-ContentCharacter =
-    !("<" / "{{" / "}}" ) char : SourceCharacter {
-    return char
-}
-
 
 MustacheOpenCharacters   "MustacheOpenCharacters"= "{{"
 MustacheCloseCharacters "MustacheCloseCharacters"= "}}"
-
 NotWhiteSpaceOrCloseMustache = ((!Whitespace !'}}') .)* { return text(); }
 NotWhiteSpaceOrCloseMustacheOrPipe = ((!Whitespace !'}}' !'|').)* { return text(); }
 GetMustacheContent = (TraverseJS)*  EnsureNoOverflowBraces { return text(); }
@@ -371,23 +340,6 @@ MustacheBlockIntermediateChar = "::"
 MustacheInterfaceChar = ">>"
 MustacheComputeChar = '=>'
 MustacheCommentChar= "!"
-
-ForeachTemplateVariable
- = __ id1: IdentifierName? __ colon: ':'? __ id2: IdentifierName? __ ','? __ {
-    //if(!id1) {
-    //   error("missing id 1");
-    //}
-  //  Validator.foreachValidateArgument(id1);
-  //  Validator.foreachValidateArgument(id2);
-    if(!id2) {
-        error("missing identifier")
-    }
-   // Validators.validateForeachSecondIdentifier();
-    if(!colon) {
-        error('missing colon');
-    }
-    return text().trim();
-}
 
 EscapedMustache "escaped Mustache" =
     (__ '{{{' __ / __ '}}}' __) {

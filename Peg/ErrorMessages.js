@@ -39,8 +39,18 @@ var ErrorMessages = {
     computeBlockNotAllowedHere: function(blockName) {
         return blockName + ' blocks cannot accept a compute block.';
     },
+    foreachInvalidFormat: function(foreachSplit) {
+        return 'foreach blocks take the format `variable_name in array_name`. Input `' +
+            foreachSplit.join(' ')   + '` does not match this format.';
+    },
+    foreachInvalidVariableArrayName: function() {
+        return 'foreach blocks must declare a variable with a different name than the array being iterated';
+    },
     foreachRequiresArray: function() {
         return 'foreach blocks require an array literal or array reference as their second argument.';
+    },
+    foreachRequireVariable: function() {
+        return 'foreach blocks require a variable preceeding the `in` operator';
     },
     foreachRequiresRocket: function() {
         return 'foreach blocks require a >> symbole after the array and before the variables.';

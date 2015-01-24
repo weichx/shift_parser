@@ -33,7 +33,7 @@ describe('case intermediate block', function () {
     });
 
     it('cannot be child of foreach', function () {
-        var template = '{{#foreach item >> index:i}} {{::case 0}} {{/foreach}}';
+        var template = '{{#foreach item in array}} {{::case 0}} {{/foreach}}';
         expect(function () {
             parser.parse(template);
         }).toThrowWithMessage(ErrorMessage.iBlockNotAllowedHere('case', 'foreach'));

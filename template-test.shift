@@ -1,5 +1,0 @@
-{{#if variable}}
-
-<div> {{content}} </div>
-
-{{/if}}

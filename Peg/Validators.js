@@ -164,17 +164,30 @@ var useHandler = function (error) {
         invalidComputeBlockLocation: function(locationName, line, column) {
             explode(ErrorMessages.computeBlockNotAllowedHere(locationName), line, column);
         },
+
+        validateForeachFormat: function(foreachSplit, line, column) {
+            if(foreachSplit.length < 3 || foreachSplit[1].toLowerCase() !== 'in') {
+                explode(ErrorMessages.foreachInvalidFormat(foreachSplit), line, column);
+            } else if(foreachSplit[0] === foreachSplit[2]) {
+                explode(ErrorMessages.foreachInvalidVariableArrayName(), line, column);
+            }
+            //todo validate variable and array names.
+            //todo validate filters / sorts
+        },
+
+        validateForeachVariable: function(variable, line, column) {
+            if(!variable) {
+                explode(ErrorMessages.foreachRequiresVariable( line, column));
+            }
+        },
+
         validateForeachArray: function(array, line, column) {
             //later, validate array literal
             if(!array) {
                 explode(ErrorMessages.foreachRequiresArray(), line, column);
             }
         },
-        validateForeachRocket: function(rocket, line, column) {
-            if(!rocket) {
-                explode(ErrorMessages.foreachRequiresRocket(), line, column);
-            }
-        },
+
         /************************ HTML ****************************/
         ensureIBlockNotChild: function (htmlTagName, children) {
             for (var i = 0; i < children.length; i++) {
